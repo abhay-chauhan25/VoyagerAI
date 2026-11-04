@@ -23,7 +23,27 @@ export type Database = {
           }
         },"public": {
           Tables: {
-            "cities": {
+            "ai_usage": {
+                  Row: {
+                    "calls": number,"day": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "calls"?: number,"day"?: string,"user_id": string
+                  }
+                  Update: {
+                    "calls"?: number,"day"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "ai_usage_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"cities": {
                   Row: {
                     "ascii_name": string,"country_code": string,"geoname_id": number,"latitude": number,"longitude": number,"name": string,"population": number,"region": string | null,"timezone": string | null
                   }
@@ -57,6 +77,26 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"drift_decks": {
+                  Row: {
+                    "built_on": string,"cards": NonNullable<Json>,"created_at": string,"deck_key": string,"source": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "built_on"?: string,"cards": NonNullable<Json>,"created_at"?: string,"deck_key": string,"source": string,"user_id"?: string
+                  }
+                  Update: {
+                    "built_on"?: string,"cards"?: NonNullable<Json>,"created_at"?: string,"deck_key"?: string,"source"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "drift_decks_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"profiles": {
                   Row: {
                     "created_at": string,"display_name": string,"handle": string | null,"home_city": string | null,"id": string,"is_public": boolean,"updated_at": string
@@ -70,6 +110,32 @@ isOneToOne: false
                   }
                   Relationships: [
                     
+                  ]
+                },"saves": {
+                  Row: {
+                    "city_id": number,"created_at": string,"id": string,"kind": Database["public"]['Enums']["save_kind"],"snapshot": NonNullable<Json>,"source_key": string,"user_id": string,"verdict": Database["public"]['Enums']["dna_reaction"]
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "city_id": number,"created_at"?: string,"id"?: string,"kind": Database["public"]['Enums']["save_kind"],"snapshot": NonNullable<Json>,"source_key": string,"user_id"?: string,"verdict": Database["public"]['Enums']["dna_reaction"]
+                  }
+                  Update: {
+                    "city_id"?: number,"created_at"?: string,"id"?: string,"kind"?: Database["public"]['Enums']["save_kind"],"snapshot"?: NonNullable<Json>,"source_key"?: string,"user_id"?: string,"verdict"?: Database["public"]['Enums']["dna_reaction"]
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "saves_city_id_fkey"
+      columns: ["city_id"]
+isOneToOne: false
+      referencedRelation: "cities"
+      referencedColumns: ["geoname_id"]
+    },{
+      foreignKeyName: "saves_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
                   ]
                 },"travel_dna": {
                   Row: {
@@ -123,7 +189,10 @@ isOneToOne: false
             [_ in never]: never
           }
           Functions: {
-            "profile_is_public":
+            "consume_ai_quota":
+{ Args: { "daily_limit": number }; Returns: boolean
+                           },
+"profile_is_public":
 { Args: { "profile_id": string }; Returns: boolean
                            },
 "search_cities":
@@ -146,7 +215,7 @@ isOneToOne: false
       } }
           }
           Enums: {
-            "budget_band": "shoestring"|"comfortable"|"splurge","dna_reaction": "pass"|"love"|"more","travel_pace": "slow"|"balanced"|"full"
+            "budget_band": "shoestring"|"comfortable"|"splurge","dna_reaction": "pass"|"love"|"more","save_kind": "destination"|"activity","travel_pace": "slow"|"balanced"|"full"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -266,7 +335,7 @@ export const Constants = {
           }
         },"public": {
           Enums: {
-            "budget_band": ["shoestring", "comfortable", "splurge"],"dna_reaction": ["pass", "love", "more"],"travel_pace": ["slow", "balanced", "full"]
+            "budget_band": ["shoestring", "comfortable", "splurge"],"dna_reaction": ["pass", "love", "more"],"save_kind": ["destination", "activity"],"travel_pace": ["slow", "balanced", "full"]
           }
         }
 } as const

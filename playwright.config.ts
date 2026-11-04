@@ -21,7 +21,10 @@ export default defineConfig({
   webServer: {
     command: "npm run build && npm run start",
     url: baseURL,
-    reuseExistingServer: true,
+    // Always our own server in fixture mode, so tests never call Gemini, OpenStreetMap or
+    // Wikimedia. Stop any dev server on port 3000 before running end-to-end tests.
+    reuseExistingServer: false,
+    env: { VOYAGER_FIXTURES: "1" },
     timeout: 240_000,
   },
 });

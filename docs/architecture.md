@@ -10,6 +10,7 @@ src/
     (onboarding)/welcome     Travel DNA deck (signed-in, no app shell)
     (app)/                   drift, trips, atlas, notes, dna, account (signed-in, app shell)
     u/[handle]/              public profile (anyone, if the owner made it public)
+    (app)/drift/[cityId]     a city's places deck
     api/cities/route.ts      city typeahead (signed-in)
     auth/callback/route.ts   exchanges email-link codes for a session
     globals.css              design tokens (light + dark) and base styles
@@ -17,6 +18,8 @@ src/
     ui/ shell/ landing/ auth/ account/ app/ brand/ theme/ credits/
     dna/                     swipe deck, onboarding flow, DNA editor, choice groups
     atlas/                   Mapbox globe, city search, add-place form, visit list, stats strip
+    deck/                    the shared swipe deck (gestures, keys, buttons)
+    drift/                   Drift cards, deck, Ask Compass, saved list
   lib/
     env.ts                   validated public configuration
     interests.ts             the shared interest vocabulary
@@ -25,6 +28,10 @@ src/
     dna/                     scenes, scoring, schemas, queries, actions
     atlas/                   countries/continents, stats, camera maths, schemas, queries, actions
     brief/                   rule-based trip-wish parser
+    server-env.ts            server-only settings (Gemini key, models, AI limit, fixtures)
+    ai/                      Gemini wrapper, untrusted-text handling, daily quota
+    places/                  OpenStreetMap, Wikipedia nearby, Wikivoyage/Wikipedia summaries, Commons photos
+    drift/                   card schemas, prompts, ranking, grounding, deck builders, search, actions
     user/                    current user, public profile lookup, initials and avatar hues
   proxy.ts                   runs on every request: session refresh + route guard
 scripts/data/
@@ -90,6 +97,44 @@ a scene that merely hints at an interest cannot max it out. Interests no scene t
   bounds when they are close together) and flies to each newly added city. The visible list is the
   accessible equivalent of the map.
 
+## Drift and Compass
+
+```text
+/drift ─► destinationDeck (cached per traveller per day)
+   ├─ quota ok? ─► Gemini: 10 destination ideas (JSON schema, repaired, validated)
+   │                 └─► grounded: each must match a GeoNames city in its country, else dropped
+   ├─ otherwise ─► fallback: large unvisited cities, one per country, taking turns across continents
+   └─► describeCities: Wikivoyage → Wikipedia summary (right place, not the region) + Commons photo
+/drift/[cityId] ─► activityDeck
+   ├─ places: OpenStreetMap (main Overpass, then a mirror) ─► else Wikipedia nearby ─► else error
+   ├─ rankActivities by Travel DNA (repeat-category penalty) ─► top 12, Commons photos via Wikidata
+   └─ quota ok? ─► Gemini "why" lines; else written from the traveller's own weights
+Ask Compass ─► quota ok? ─► Gemini answer ─► grounded ─► described   (else: trip-brief parser fallback)
+swipe ─► judgeCard ─► saves (verdict + card snapshot)
+```
+
+AI safeguards:
+
+- The model only suggests and writes text. No place it names is shown without grounding, and
+  nothing it returns triggers an action.
+- Every answer is requested as JSON with a schema, repaired (bad items dropped, text trimmed) and
+  validated with zod before use. Failures return a reason; every caller has a non-AI path.
+- One retry on `GEMINI_FALLBACK_MODEL` for overload, rate-limit or timeout (12 s).
+- Outside text (Wikipedia, OpenStreetMap, the traveller's own request) enters prompts inside
+  `<data>` tags, stripped of markup and length-limited; the system prompt forbids following it.
+- `consume_ai_quota()` counts calls per traveller per day atomically and refuses over the limit.
+- Logs carry status codes and field names, never prompts, answers or keys.
+- The Gemini key is read only in `server-only` modules; the build fails if one is imported by
+  client code.
+
+Free services: requests identify Voyager by its public repository URL, time out, and are cached in
+memory for a day. Photos are used only if hosted on Wikimedia Commons and are shown with author and
+licence; the browser loads them directly from Wikimedia.
+
+Tests never call these services: with `VOYAGER_FIXTURES=1` (set by the Playwright web server),
+`providers()` returns deterministic fixtures, including a fictional city that grounding must drop
+and a request that simulates an AI outage.
+
 ## Database security
 
 | Table           | Owner                                             | Others signed in | Visitors       |
@@ -99,6 +144,9 @@ a scene that merely hints at an interest cannot max it out. Interests no scene t
 | `dna_reactions` | read, insert, update, delete                      | none             | none           |
 | `visits`        | read, insert, delete                              | read if public   | read if public |
 | `cities`        | read                                              | read             | read           |
+| `saves`         | read, insert, update, delete                      | none             | none           |
+| `drift_decks`   | read, insert, update, delete                      | none             | none           |
+| `ai_usage`      | read (writes only via `consume_ai_quota()`)       | none             | none           |
 
 - Every table has RLS on and explicit, column-level grants. `user_id` can appear in an update only
   because upserts re-send it; every policy pins it to the caller.
@@ -124,5 +172,15 @@ Validated at runtime by `src/lib/env.ts`:
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | browser-safe by design; every table is protected by RLS  |
 | `NEXT_PUBLIC_SITE_URL`                 | base for auth redirect links                             |
 | `NEXT_PUBLIC_MAPBOX_TOKEN`             | optional; must be a public `pk.` token restricted by URL |
+
+Server-only (`src/lib/server-env.ts`):
+
+| Variable                | Notes                                                       |
+| ----------------------- | ----------------------------------------------------------- |
+| `GEMINI_API_KEY`        | optional; without it every AI feature uses its fallback     |
+| `GEMINI_MODEL`          | default `gemini-3.8-flash`                                  |
+| `GEMINI_FALLBACK_MODEL` | default `gemini-3.5-flash-lite`; tried once on overload     |
+| `AI_DAILY_LIMIT`        | default 30 requests per traveller per day                   |
+| `VOYAGER_FIXTURES`      | `1` swaps external services for fixtures (end-to-end tests) |
 
 The Supabase secret / service-role key is not used by the app.

@@ -78,7 +78,7 @@ test.describe("Travel DNA", () => {
 
     await completeOnboarding(page, (i) => (i % 2 === 0 ? "More like this" : "Not for me"));
     await page.goto("/drift");
-    await expect(page.getByText("Your Travel DNA is ready")).toBeVisible();
+    await expect(page.getByText("Picked by Compass for your Travel DNA.")).toBeVisible();
   });
 
   test("onboarding is closed to guests", async ({ page }) => {

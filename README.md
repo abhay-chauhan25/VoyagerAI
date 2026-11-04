@@ -16,7 +16,12 @@ product blueprint and stage plan, and [`docs/architecture.md`](docs/architecture
   explained taste profile you can adjust.
 - **Atlas**: a Mapbox globe of the countries and cities you've been to, with offline city search.
 - **Public profiles** at `/u/<handle>`: opt-in, showing your Atlas and top interests.
-- App shell with Drift, Trips and Field Notes (empty states for now), day/night/auto theme.
+- **Drift**: a daily deck of destinations picked by Compass (Gemini) for your Travel DNA, each
+  checked against a real city list, with Commons photos and Wikivoyage/Wikipedia descriptions; a
+  deck of real places per city (OpenStreetMap, or Wikipedia when OpenStreetMap is down); **Ask
+  Compass** plain-language search on a globe; and a Saved list grouped by city. Every AI feature
+  has a non-AI fallback and a per-user daily limit.
+- App shell with Trips and Field Notes (empty states for now), day/night/auto theme.
 
 ## Requirements
 
@@ -33,6 +38,7 @@ npm run db:reset                 # applies migrations and loads the cities
 cp .env.example .env && chmod 600 .env
 npx supabase status -o env       # copy API_URL and PUBLISHABLE_KEY into .env
 # add your Mapbox public token (pk.…) as NEXT_PUBLIC_MAPBOX_TOKEN in .env
+# optional: GEMINI_API_KEY in .env turns Compass on (see .env.example for model and limit settings)
 npm run dev                      # http://localhost:3000
 ```
 
@@ -41,16 +47,16 @@ Emails (confirmations, sign-in links) never leave your machine: open the local i
 
 ## Checks
 
-| Command                | What it runs                                                           |
-| ---------------------- | ---------------------------------------------------------------------- |
-| `npm run lint`         | ESLint (Next.js, TypeScript, accessibility rules)                      |
-| `npm run format:check` | Prettier                                                               |
-| `npm run typecheck`    | `tsc --noEmit`, strict                                                 |
-| `npm test`             | Vitest unit and component tests                                        |
-| `npm run test:db`      | pgTAP tests of database security (needs `db:start`)                    |
-| `npm run test:e2e`     | Playwright, desktop and phone, against the real app and local Supabase |
-| `npm run build`        | Production build                                                       |
-| `npm run check`        | lint + format + typecheck + unit tests + build                         |
+| Command                | What it runs                                                                                                                                        |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run lint`         | ESLint (Next.js, TypeScript, accessibility rules)                                                                                                   |
+| `npm run format:check` | Prettier                                                                                                                                            |
+| `npm run typecheck`    | `tsc --noEmit`, strict                                                                                                                              |
+| `npm test`             | Vitest unit and component tests                                                                                                                     |
+| `npm run test:db`      | pgTAP tests of database security (needs `db:start`)                                                                                                 |
+| `npm run test:e2e`     | Playwright, desktop and phone, against local Supabase with AI and map services faked (`VOYAGER_FIXTURES=1`); stop any dev server on port 3000 first |
+| `npm run build`        | Production build                                                                                                                                    |
+| `npm run check`        | lint + format + typecheck + unit tests + build                                                                                                      |
 
 CI (GitHub Actions) runs lint, format, typecheck, unit tests and build, plus the database tests on a
 local Postgres. End-to-end tests run locally.
@@ -60,6 +66,8 @@ local Postgres. End-to-end tests run locally.
 - Cities: [GeoNames](https://www.geonames.org/) (CC BY 4.0). Country outlines: Natural Earth
   (public domain). Continents: GeoNames country info (CC BY 4.0).
 - Maps: © Mapbox © OpenStreetMap.
+- Drift places: © OpenStreetMap contributors (ODbL) and Wikipedia (CC BY-SA); descriptions from
+  Wikivoyage/Wikipedia (CC BY-SA); photos from Wikimedia Commons, credited on each card.
 
 ### Pictures
 

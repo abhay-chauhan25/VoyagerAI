@@ -30,9 +30,13 @@ Deliberately out of scope: booking (links out instead), generic social posting, 
 
 Chosen with the taste-skill design process (direction "The split stage").
 
-- **Palette "Stone and blueprint"**: stone paper `#dfdedb`, near-black ink `#26251e`, one blueprint-blue
-  accent `#2456d6` — the colours of a chart table. Dark mode "Night Flight" keeps the same roles on a
-  warm neutral near-black (no navy, by house rule).
+- **Palette "Postcards"** (replaced "Stone and blueprint" when the owner found the app too plain): a
+  calm stone page (`#e2ded5`, panels a tone step off it, never white) by day and warm charcoal
+  (`#151513`) by night, so photos and the map carry the colour. Six travel hues (cobalt, sea,
+  vermilion, saffron, rose, moss) encode things, never decoration: each trip day (its chip, pins and
+  route match), each interest family, each section's mark in the navigation. Places without a photo
+  get a field of their own stable hue.
+- **Maps**: Mapbox Standard, lit as day or night to follow the theme, with stars around the globe.
 - **Type**: Rokkitt 800 (slab capitals) for display and the wordmark — luggage tags, departure boards;
   Literata for all text, including the app UI.
 - **Public pages** (landing, auth): square corners, one accent action, real photographs of the
@@ -41,7 +45,9 @@ Chosen with the taste-skill design process (direction "The split stage").
   active state, accent reserved for data and at most one control, near-black primary button, honest
   empty states that keep their frame.
 - **Motion**: strong ease-out curves, 140–240 ms for UI responses, press feedback at scale 0.97,
-  section entrances, one slow photographic crossfade; everything respects `prefers-reduced-motion`.
+  section entrances, one slow photographic crossfade. In the app: Drift cards tilt on a spring with
+  the next card rising underneath, trip routes draw themselves in, pins lift when their stop is
+  pointed at, and the idle Atlas globe turns slowly. Everything respects `prefers-reduced-motion`.
 
 Tokens live in `src/app/globals.css`; components reference roles (`bg`, `ink`, `accent`…), never hex.
 
@@ -97,8 +103,9 @@ Principles:
 - `saves` — a traveller's Drift verdicts, each with a snapshot of the card (place details, photo credit). Per user by design: there is no shared, writable place cache, so the app never needs an admin key. **(built)**
 - `drift_decks` — today's cached deck per traveller and deck (destinations, or a city's places). **(built)**
 - `ai_usage` — AI calls per traveller per day, written only through `consume_ai_quota()`. **(built)**
-- `trips`, `trip_members` (role: owner/editor/viewer), `trip_days`, `trip_stops`.
-- `proposals` — AI change sets awaiting accept/reject.
+- `trips`, `trip_days` (title, travel mode, cached route), `trip_stops` (place snapshot, visit length, price level, optional amount). Owner-only for now. **(built)**
+- `trip_members` (role: owner/editor/viewer) — Huddle.
+- `proposals` — change sets from Compass (or the rule-based fallback) awaiting accept/reject. **(built)**
 - `votes` — Huddle decisions.
 - `cities` — GeoNames reference list (34k places, 15,000+ people), loaded locally. **(built)**
 - `visits` — Atlas entries (country, optional city, optional year). **(built)**
@@ -128,3 +135,4 @@ the map. Working at the end of Stage 4.
 | Stage 1 | Docker Desktop running                                                          | —                                      |
 | Stage 2 | Mapbox account, **public** token (`pk.…`) restricted to `http://localhost:3000` | `.env`: `NEXT_PUBLIC_MAPBOX_TOKEN`     |
 | Stage 3 | Gemini API key (Google AI Studio)                                               | `.env`: `GEMINI_API_KEY` (server only) |
+| Stage 4 | Optional second Mapbox public token, default scopes, no URL restriction         | `.env`: `MAPBOX_SERVER_TOKEN` (server) |

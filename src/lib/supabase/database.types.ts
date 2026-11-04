@@ -111,6 +111,32 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
+                },"proposals": {
+                  Row: {
+                    "changes": NonNullable<Json>,"created_at": string,"decided_at": string | null,"id": string,"request": string,"source": string,"status": Database["public"]['Enums']["proposal_status"],"summary": string,"trip_id": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "changes": NonNullable<Json>,"created_at"?: string,"decided_at"?: string | null,"id"?: string,"request": string,"source": string,"status"?: Database["public"]['Enums']["proposal_status"],"summary": string,"trip_id": string,"user_id"?: string
+                  }
+                  Update: {
+                    "changes"?: NonNullable<Json>,"created_at"?: string,"decided_at"?: string | null,"id"?: string,"request"?: string,"source"?: string,"status"?: Database["public"]['Enums']["proposal_status"],"summary"?: string,"trip_id"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "proposals_trip_id_fkey"
+      columns: ["trip_id"]
+isOneToOne: false
+      referencedRelation: "trips"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "proposals_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"saves": {
                   Row: {
                     "city_id": number,"created_at": string,"id": string,"kind": Database["public"]['Enums']["save_kind"],"snapshot": NonNullable<Json>,"source_key": string,"user_id": string,"verdict": Database["public"]['Enums']["dna_reaction"]
@@ -157,6 +183,90 @@ isOneToOne: true
       referencedColumns: ["id"]
     }
                   ]
+                },"trip_days": {
+                  Row: {
+                    "day_index": number,"mode": Database["public"]['Enums']["travel_mode"],"route": Json | null,"title": string | null,"title_source": string | null,"trip_id": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "day_index": number,"mode"?: Database["public"]['Enums']["travel_mode"],"route"?: Json | null,"title"?: string | null,"title_source"?: string | null,"trip_id": string,"user_id"?: string
+                  }
+                  Update: {
+                    "day_index"?: number,"mode"?: Database["public"]['Enums']["travel_mode"],"route"?: Json | null,"title"?: string | null,"title_source"?: string | null,"trip_id"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "trip_days_trip_id_fkey"
+      columns: ["trip_id"]
+isOneToOne: false
+      referencedRelation: "trips"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "trip_days_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"trip_stops": {
+                  Row: {
+                    "cost_amount": number | null,"created_at": string,"day_index": number,"dwell_minutes": number,"id": string,"place": NonNullable<Json>,"position": number,"price_level": number,"source_key": string,"trip_id": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "cost_amount"?: number | null,"created_at"?: string,"day_index": number,"dwell_minutes": number,"id"?: string,"place": NonNullable<Json>,"position": number,"price_level": number,"source_key": string,"trip_id": string,"user_id"?: string
+                  }
+                  Update: {
+                    "cost_amount"?: number | null,"created_at"?: string,"day_index"?: number,"dwell_minutes"?: number,"id"?: string,"place"?: NonNullable<Json>,"position"?: number,"price_level"?: number,"source_key"?: string,"trip_id"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "trip_stops_trip_id_day_index_fkey"
+      columns: ["trip_id","day_index"]
+isOneToOne: false
+      referencedRelation: "trip_days"
+      referencedColumns: ["trip_id","day_index"]
+    },{
+      foreignKeyName: "trip_stops_trip_id_fkey"
+      columns: ["trip_id"]
+isOneToOne: false
+      referencedRelation: "trips"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "trip_stops_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"trips": {
+                  Row: {
+                    "budget": Database["public"]['Enums']["budget_band"],"city_id": number,"created_at": string,"currency": string,"day_count": number,"id": string,"pace": Database["public"]['Enums']["travel_pace"],"start_date": string,"title": string,"updated_at": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "budget": Database["public"]['Enums']["budget_band"],"city_id": number,"created_at"?: string,"currency": string,"day_count": number,"id"?: string,"pace": Database["public"]['Enums']["travel_pace"],"start_date": string,"title": string,"updated_at"?: string,"user_id"?: string
+                  }
+                  Update: {
+                    "budget"?: Database["public"]['Enums']["budget_band"],"city_id"?: number,"created_at"?: string,"currency"?: string,"day_count"?: number,"id"?: string,"pace"?: Database["public"]['Enums']["travel_pace"],"start_date"?: string,"title"?: string,"updated_at"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "trips_city_id_fkey"
+      columns: ["city_id"]
+isOneToOne: false
+      referencedRelation: "cities"
+      referencedColumns: ["geoname_id"]
+    },{
+      foreignKeyName: "trips_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"visits": {
                   Row: {
                     "city_id": number | null,"country_code": string,"created_at": string,"id": string,"user_id": string,"visited_year": number | null
@@ -189,8 +299,17 @@ isOneToOne: false
             [_ in never]: never
           }
           Functions: {
-            "consume_ai_quota":
+            "arrange_trip":
+{ Args: { "p_add"?: Json,"p_layout": Json,"p_remove"?: (string)[],"p_trip": string }; Returns: undefined
+                           },
+"consume_ai_quota":
 { Args: { "daily_limit": number }; Returns: boolean
+                           },
+"create_trip":
+{ Args: { "p_days": Json,"p_stops": Json,"p_trip": Json }; Returns: string
+                           },
+"owns_trip":
+{ Args: { "p_trip": string }; Returns: boolean
                            },
 "profile_is_public":
 { Args: { "profile_id": string }; Returns: boolean
@@ -215,7 +334,7 @@ isOneToOne: false
       } }
           }
           Enums: {
-            "budget_band": "shoestring"|"comfortable"|"splurge","dna_reaction": "pass"|"love"|"more","save_kind": "destination"|"activity","travel_pace": "slow"|"balanced"|"full"
+            "budget_band": "shoestring"|"comfortable"|"splurge","dna_reaction": "pass"|"love"|"more","proposal_status": "pending"|"applied"|"dismissed","save_kind": "destination"|"activity","travel_mode": "walking"|"driving","travel_pace": "slow"|"balanced"|"full"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -335,7 +454,7 @@ export const Constants = {
           }
         },"public": {
           Enums: {
-            "budget_band": ["shoestring", "comfortable", "splurge"],"dna_reaction": ["pass", "love", "more"],"save_kind": ["destination", "activity"],"travel_pace": ["slow", "balanced", "full"]
+            "budget_band": ["shoestring", "comfortable", "splurge"],"dna_reaction": ["pass", "love", "more"],"proposal_status": ["pending", "applied", "dismissed"],"save_kind": ["destination", "activity"],"travel_mode": ["walking", "driving"],"travel_pace": ["slow", "balanced", "full"]
           }
         }
 } as const

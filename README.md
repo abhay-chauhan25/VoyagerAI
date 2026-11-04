@@ -21,7 +21,16 @@ product blueprint and stage plan, and [`docs/architecture.md`](docs/architecture
   deck of real places per city (OpenStreetMap, or Wikipedia when OpenStreetMap is down); **Ask
   Compass** plain-language search on a globe; and a Saved list grouped by city. Every AI feature
   has a non-AI fallback and a per-user daily limit.
-- App shell with Trips and Field Notes (empty states for now), day/night/auto theme.
+- **Trips (Trip Canvas + Compose)**: Compose turns a city's saves into a day-by-day plan: nearby
+  places grouped into days by your pace, each day ordered around OpenStreetMap opening hours, travel
+  times and street routes from Mapbox Directions (or labelled straight-line estimates). The canvas
+  shows a timeline beside a map with each day in its own colour; drag stops within and between days
+  (mouse, touch or keyboard), switch walk/drive, re-order a day, set price levels or exact amounts,
+  and watch pace and budget meters. **Ask Compass** to change the trip ("make day 2 slower", "it's
+  raining on Thursday") and accept or reject each proposed change; without AI a rule-based parser
+  handles common requests.
+- App shell with Field Notes (empty state for now), day/night/auto theme in the "Postcards" palette,
+  maps on Mapbox Standard lit for day or night.
 
 ## Requirements
 
@@ -34,13 +43,17 @@ product blueprint and stage plan, and [`docs/architecture.md`](docs/architecture
 npm install
 npm run db:start                 # starts local Supabase in Docker (first run downloads images)
 npm run data:cities              # downloads the GeoNames city list (~3 MB) into a local seed file
-npm run db:reset                 # applies migrations and loads the cities
+npm run db:reset                 # first time only: applies migrations and loads the cities
 cp .env.example .env && chmod 600 .env
 npx supabase status -o env       # copy API_URL and PUBLISHABLE_KEY into .env
 # add your Mapbox public token (pk.…) as NEXT_PUBLIC_MAPBOX_TOKEN in .env
 # optional: GEMINI_API_KEY in .env turns Compass on (see .env.example for model and limit settings)
+# optional: MAPBOX_SERVER_TOKEN (a second public token, no URL restriction) gives real travel times
 npm run dev                      # http://localhost:3000
 ```
+
+After pulling new code, apply new migrations with `npm run db:migrate`. It keeps your accounts and
+data; `npm run db:reset` wipes the local database, including every account.
 
 Emails (confirmations, sign-in links) never leave your machine: open the local inbox at
 <http://127.0.0.1:54324>. Supabase Studio is at <http://127.0.0.1:54323>.
@@ -65,7 +78,8 @@ local Postgres. End-to-end tests run locally.
 
 - Cities: [GeoNames](https://www.geonames.org/) (CC BY 4.0). Country outlines: Natural Earth
   (public domain). Continents: GeoNames country info (CC BY 4.0).
-- Maps: © Mapbox © OpenStreetMap.
+- Maps and travel times: © Mapbox © OpenStreetMap.
+- Opening hours: OpenStreetMap, evaluated with the `opening_hours` library.
 - Drift places: © OpenStreetMap contributors (ODbL) and Wikipedia (CC BY-SA); descriptions from
   Wikivoyage/Wikipedia (CC BY-SA); photos from Wikimedia Commons, credited on each card.
 

@@ -2,6 +2,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { countryName } from "@/lib/atlas/countries";
 import type { Card } from "@/lib/drift/cards";
+import { INTEREST_HUE, hueStyle, nameHue } from "@/lib/hues";
+import type { Interest } from "@/lib/interests";
 import type { Photo } from "@/lib/places/types";
 
 function place(card: Card): string {
@@ -59,13 +61,41 @@ function Visual({ card, priority }: { card: Card; priority?: boolean }) {
       />
     );
   }
-  // No freely licensed photo exists for it: set the name in type rather than show a stand-in picture.
+  // No freely licensed photo exists for it: set the name in type on a field of the place's own
+  // colour (stable per name) rather than show a stand-in picture.
   return (
-    <div className="flex h-full flex-col justify-end bg-surface p-5">
-      <span className="font-display text-[2.5rem] leading-[0.9] font-extrabold break-words text-ink uppercase">
+    <div
+      style={hueStyle(nameHue(card.name))}
+      className="hue-fill flex h-full flex-col justify-end p-5"
+    >
+      <span className="font-display text-[2.5rem] leading-[0.9] font-extrabold break-words uppercase">
         {card.name}
       </span>
     </div>
+  );
+}
+
+/** Interests as chips in their family's hue (food and drink, culture, city, night, outdoors, water). */
+export function InterestChips({
+  interests,
+  label = "Matches your interests",
+}: {
+  interests: readonly Interest[];
+  label?: string;
+}) {
+  return (
+    <ul className="flex flex-wrap gap-1.5" aria-label={label}>
+      {interests.map((interest) => (
+        <li
+          key={interest}
+          style={hueStyle(INTEREST_HUE[interest])}
+          className="hue-chip inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-meta"
+        >
+          <span aria-hidden="true" className="hue-mark size-1.5 rounded-full" />
+          {interest}
+        </li>
+      ))}
+    </ul>
   );
 }
 
@@ -82,15 +112,7 @@ export function DriftCardFace({ card, priority }: { card: Card; priority?: boole
           <p className="text-meta text-muted">{place(card)}</p>
         </div>
         <p className="text-ui">{card.why}</p>
-        {card.interests.length > 0 ? (
-          <ul className="flex flex-wrap gap-1.5" aria-label="Matches your interests">
-            {card.interests.map((interest) => (
-              <li key={interest} className="rounded-[3px] bg-raised px-2 py-0.5 text-meta">
-                {interest}
-              </li>
-            ))}
-          </ul>
-        ) : null}
+        {card.interests.length > 0 ? <InterestChips interests={card.interests} /> : null}
         {card.kind === "destination" && card.blurb ? (
           <p className="line-clamp-2 text-meta text-muted">{card.blurb.text}</p>
         ) : null}
@@ -142,7 +164,10 @@ export function DriftCardPeek({ card }: { card: Card }) {
 export function DriftCardRow({ card, children }: { card: Card; children?: React.ReactNode }) {
   return (
     <div className="flex gap-4 py-3">
-      <div className="relative size-20 shrink-0 overflow-hidden rounded-control bg-surface">
+      <div
+        style={hueStyle(nameHue(card.name))}
+        className="hue-fill relative size-20 shrink-0 overflow-hidden rounded-control"
+      >
         {card.photo ? (
           <Image
             src={card.photo.url}

@@ -1,5 +1,6 @@
 import "server-only";
 import { z } from "zod";
+import { distanceKm } from "@/lib/geo";
 import { fetchJson } from "./http";
 import type { Blurb, Photo } from "./types";
 
@@ -124,15 +125,9 @@ const summarySchema = z.object({
   content_urls: z.object({ desktop: z.object({ page: z.url() }) }).optional(),
 });
 
-/** Great-circle distance in km, used to check a summary is about the right place. */
-export function distanceKm(aLat: number, aLon: number, bLat: number, bLon: number): number {
-  const rad = Math.PI / 180;
-  const h =
-    Math.sin(((bLat - aLat) * rad) / 2) ** 2 +
-    Math.cos(aLat * rad) * Math.cos(bLat * rad) * Math.sin(((bLon - aLon) * rad) / 2) ** 2;
-  return 2 * 6371 * Math.asin(Math.sqrt(h));
-}
+export { distanceKm };
 
+// Used to check a summary is about the right place.
 const SAME_PLACE_KM = 40;
 /** A page whose short description says it is a region, not a town, describes the wrong thing. */
 const REGION_WORDS =

@@ -1,9 +1,9 @@
 "use client";
 
-import "mapbox-gl/dist/mapbox-gl.css";
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useRef } from "react";
 import type { FeatureCollection, Point } from "geojson";
 import type { FilterSpecification, GeoJSONSource, Map as MapboxMap } from "mapbox-gl";
+import { prefersReducedMotion, useMapbox } from "@/components/map/use-mapbox";
 import {
   angularSpread,
   sphericalCentroid,
@@ -20,28 +20,12 @@ type Props = {
   label: string;
 };
 
-const STYLES = {
-  light: "mapbox://styles/mapbox/light-v11",
-  dark: "mapbox://styles/mapbox/dark-v11",
-} as const;
 const COUNTRIES_URL = "/geo/countries-110m.json";
-
-/** Follows the page theme: an explicit data-theme wins, otherwise the system preference. */
-function subscribeTheme(onChange: () => void) {
-  const observer = new MutationObserver(onChange);
-  observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
-  const query = window.matchMedia("(prefers-color-scheme: dark)");
-  query.addEventListener("change", onChange);
-  return () => {
-    observer.disconnect();
-    query.removeEventListener("change", onChange);
-  };
-}
-function currentTheme(): "light" | "dark" {
-  const attr = document.documentElement.getAttribute("data-theme");
-  if (attr === "light" || attr === "dark") return attr;
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-}
+/** The idle globe turns this many degrees per second, and only when zoomed out. */
+const SPIN_DEGREES_PER_SECOND = 3;
+const SPIN_MAX_ZOOM = 3;
+/** After the traveller lets go, the globe waits this long before turning again. */
+const SPIN_RESUME_MS = 4000;
 
 function cityFeatures(cities: readonly MapCity[]): FeatureCollection<Point> {
   return {
@@ -54,132 +38,126 @@ function cityFeatures(cities: readonly MapCity[]): FeatureCollection<Point> {
   };
 }
 
-/** A quiet atmosphere in the page's own colours instead of the default star field. */
-function applyAtmosphere(map: MapboxMap) {
-  const css = getComputedStyle(document.documentElement);
-  const ground = css.getPropertyValue("--ground").trim() || "#e6e5e1";
-  const surface = css.getPropertyValue("--surface").trim() || "#d3d2ce";
-  map.setFog({
-    color: surface,
-    "high-color": surface,
-    "space-color": ground,
-    "horizon-blend": 0.04,
-    "star-intensity": 0,
-  });
+function cssVar(name: string, fallback: string): string {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback;
 }
 
-/** Adds Voyager's layers to a freshly loaded style (they are dropped whenever the style changes). */
+/** Adds Voyager's layers to a freshly loaded style, in Mapbox Standard's slots. */
 function addLayers(map: MapboxMap, countryCodes: readonly string[], cities: readonly MapCity[]) {
-  const css = getComputedStyle(document.documentElement);
-  const accent = css.getPropertyValue("--accent").trim() || "#2456d6";
-  const ink = css.getPropertyValue("--ink").trim() || "#26251e";
+  const accent = cssVar("--accent", "#2456d6");
+  const filter: FilterSpecification = ["in", ["get", "iso"], ["literal", [...countryCodes]]];
 
   map.addSource("countries", { type: "geojson", data: COUNTRIES_URL });
   map.addLayer({
     id: "visited-countries",
     type: "fill",
+    slot: "middle",
     source: "countries",
-    filter: ["in", ["get", "iso"], ["literal", [...countryCodes]]],
-    paint: { "fill-color": accent, "fill-opacity": 0.55 },
+    filter,
+    paint: { "fill-color": accent, "fill-opacity": 0.45, "fill-emissive-strength": 1 },
   });
   map.addLayer({
     id: "visited-country-edges",
     type: "line",
+    slot: "middle",
     source: "countries",
-    filter: ["in", ["get", "iso"], ["literal", [...countryCodes]]],
-    paint: { "line-color": accent, "line-width": 1 },
+    filter,
+    paint: { "line-color": accent, "line-width": 1.25, "line-emissive-strength": 1 },
   });
   map.addSource("cities", { type: "geojson", data: cityFeatures(cities) });
   map.addLayer({
     id: "visited-cities",
     type: "circle",
+    slot: "top",
     source: "cities",
     paint: {
-      "circle-radius": ["interpolate", ["linear"], ["zoom"], 1, 3, 6, 6],
-      "circle-color": ink,
+      "circle-radius": ["interpolate", ["linear"], ["zoom"], 1, 3.5, 6, 7],
+      "circle-color": "#ffffff",
       "circle-stroke-color": accent,
-      "circle-stroke-width": 1.5,
+      "circle-stroke-width": 2,
+      "circle-emissive-strength": 1,
     },
   });
 }
 
 /**
- * The Atlas globe: visited countries filled in the accent, visited cities as dots. Mapbox is loaded
- * only in the browser. The visible list beside the map is the accessible equivalent of this picture.
+ * The Atlas globe: visited countries filled in the accent, visited cities as dots, on Mapbox
+ * Standard lit for Day or Night. At rest it turns slowly until touched (never with reduced motion).
+ * The visible list beside the map is the accessible equivalent of this picture.
  */
 export function AtlasMap({ token, countryCodes, cities, label }: Props) {
-  const container = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<MapboxMap | null>(null);
   const data = useRef({ countryCodes, cities });
-  const theme = useSyncExternalStore(subscribeTheme, currentTheme, () => "light" as const);
-  const [failure, setFailure] = useState<string | null>(null);
+  const previousIds = useRef(new Set(cities.map((c) => c.id)));
 
+  const { container, map, failure } = useMapbox(
+    token,
+    { projection: "globe", center: [10, 30], zoom: 1.1, cooperativeGestures: true },
+    (m) => addLayers(m, data.current.countryCodes, data.current.cities),
+    (m, mapboxgl) => {
+      m.addControl(new mapboxgl.NavigationControl({ showCompass: false }), "top-right");
+      // Frame the traveller's own places once, so a new map opens on them rather than the Atlantic.
+      m.once("load", () => {
+        const points: LngLat[] = data.current.cities.map((c) => [c.longitude, c.latitude]);
+        const centre = sphericalCentroid(points);
+        if (!centre) return;
+        if (angularSpread(points, centre) > WIDE_SPREAD_DEGREES) {
+          m.jumpTo({ center: centre, zoom: 1.1 });
+        } else {
+          const bounds = new mapboxgl.LngLatBounds();
+          for (const point of points) bounds.extend(point);
+          m.fitBounds(bounds, { padding: 64, maxZoom: 4, duration: 0 });
+        }
+      });
+    },
+  );
+
+  // The idle spin: one second of turning at a time, chained, paused by any touch or drag.
   useEffect(() => {
-    if (!token || !container.current) return;
-    let cancelled = false;
-    let map: MapboxMap | undefined;
-
-    import("mapbox-gl")
-      .then(({ default: mapboxgl }) => {
-        if (cancelled || !container.current) return;
-        mapboxgl.accessToken = token;
-        map = new mapboxgl.Map({
-          container: container.current,
-          style: STYLES[currentTheme()],
-          projection: "globe",
-          center: [10, 30],
-          zoom: 1.1,
-          cooperativeGestures: true,
-          attributionControl: true,
-        });
-        map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), "top-right");
-        map.on("style.load", () => {
-          if (!map) return;
-          applyAtmosphere(map);
-          addLayers(map, data.current.countryCodes, data.current.cities);
-        });
-        // Frame the traveller's own places once, so a new map opens on them rather than the Atlantic.
-        map.once("load", () => {
-          const points: LngLat[] = data.current.cities.map((c) => [c.longitude, c.latitude]);
-          const centre = sphericalCentroid(points);
-          if (!map || !centre) return;
-          if (angularSpread(points, centre) > WIDE_SPREAD_DEGREES) {
-            map.jumpTo({ center: centre, zoom: 1.1 });
-          } else {
-            const bounds = new mapboxgl.LngLatBounds();
-            for (const point of points) bounds.extend(point);
-            map.fitBounds(bounds, { padding: 64, maxZoom: 4, duration: 0 });
-          }
-        });
-        map.on("error", (event) => {
-          // Mapbox reports a bad or restricted token as an error event, not an exception.
-          const status = (event.error as { status?: number } | undefined)?.status;
-          if (status === 401 || status === 403)
-            setFailure("The map couldn't load: check the Mapbox token and its URL restrictions.");
-        });
-        mapRef.current = map;
-      })
-      .catch(() => setFailure("The map couldn't load. Your places are listed below."));
-
-    return () => {
-      cancelled = true;
-      map?.remove();
-      mapRef.current = null;
+    if (!map || prefersReducedMotion()) return;
+    let held = false;
+    let resumeTimer: number | undefined;
+    const spin = () => {
+      if (held || map.getZoom() > SPIN_MAX_ZOOM) return;
+      const centre = map.getCenter();
+      centre.lng -= SPIN_DEGREES_PER_SECOND;
+      map.easeTo({ center: centre, duration: 1000, easing: (t) => t });
     };
-  }, [token]);
-
-  // Theme switch: swap the base style; the style.load handler re-adds Voyager's layers.
-  useEffect(() => {
-    mapRef.current?.setStyle(STYLES[theme]);
-  }, [theme]);
+    const hold = () => {
+      held = true;
+      window.clearTimeout(resumeTimer);
+    };
+    const release = () => {
+      window.clearTimeout(resumeTimer);
+      resumeTimer = window.setTimeout(() => {
+        held = false;
+        spin();
+      }, SPIN_RESUME_MS);
+    };
+    map.on("mousedown", hold);
+    map.on("touchstart", hold);
+    map.on("wheel", hold);
+    map.on("mouseup", release);
+    map.on("touchend", release);
+    map.on("moveend", spin);
+    spin();
+    return () => {
+      window.clearTimeout(resumeTimer);
+      map.off("mousedown", hold);
+      map.off("touchstart", hold);
+      map.off("wheel", hold);
+      map.off("mouseup", release);
+      map.off("touchend", release);
+      map.off("moveend", spin);
+    };
+  }, [map]);
 
   // Data changes (a place added or removed): remember them for the next style load, and update the
   // live map's filters and points in place.
   useEffect(() => {
-    const previous = new Set(data.current.cities.map((c) => c.id));
     data.current = { countryCodes, cities };
-    const map = mapRef.current;
-    if (!map || !map.isStyleLoaded() || !map.getLayer("visited-countries")) return;
+    const previous = previousIds.current;
+    previousIds.current = new Set(cities.map((c) => c.id));
+    if (!map || !map.getLayer("visited-countries")) return;
     // Show a newly added city: fly there, or jump when the user prefers less motion.
     const added = cities.find((c) => !previous.has(c.id));
     if (added) {
@@ -187,14 +165,14 @@ export function AtlasMap({ token, countryCodes, cities, label }: Props) {
         center: [added.longitude, added.latitude] as LngLat,
         zoom: Math.max(map.getZoom(), 2.5),
       };
-      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) map.jumpTo(target);
+      if (prefersReducedMotion()) map.jumpTo(target);
       else map.flyTo({ ...target, duration: 1400, essential: false });
     }
     const filter: FilterSpecification = ["in", ["get", "iso"], ["literal", [...countryCodes]]];
     map.setFilter("visited-countries", filter);
     map.setFilter("visited-country-edges", filter);
     (map.getSource("cities") as GeoJSONSource | undefined)?.setData(cityFeatures(cities));
-  }, [countryCodes, cities]);
+  }, [map, countryCodes, cities]);
 
   if (!token || failure) {
     return (
@@ -210,7 +188,7 @@ export function AtlasMap({ token, countryCodes, cities, label }: Props) {
       ref={container}
       role="img"
       aria-label={label}
-      className="h-full min-h-64 w-full overflow-hidden rounded-card bg-raised"
+      className="h-full min-h-64 w-full overflow-hidden rounded-card bg-night"
     />
   );
 }

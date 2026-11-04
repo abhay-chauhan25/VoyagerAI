@@ -2,9 +2,10 @@
 
 /*
  * Voyager design tokens.
- * Palette "Stone and blueprint": stone paper, near-black ink, one blueprint-blue accent — the colours
- * of a chart table. Dark mode ("Night Flight") keeps the same roles on a true warm-neutral dark.
- * Components reference roles only (bg, surface, ink, muted, accent…), never raw hex values.
+ * Palette "Postcards": the page is a calm stone (day) or warm charcoal (night) so that photos and
+ * the map carry the colour. Six travel hues encode things, never decoration: each trip day has one
+ * (its chip, pins and route match), each interest family has one, and each section has a mark.
+ * Components reference roles only (bg, surface, ink, muted, accent, hue-*), never raw hex values.
  */
 
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
@@ -12,35 +13,48 @@
 :root {
   color-scheme: light;
 
-  /* Grounds and surfaces */
-  --bg: #dfdedb; /* page paper */
-  --surface: #d3d2ce; /* a field one step darker than the page */
-  --ground: #e6e5e1; /* app canvas */
-  --panel: #f1f0ed; /* app panels, inputs */
-  --raised: #ebeae6;
-  --active: #d9d8d3; /* selected nav row */
+  /* Grounds and surfaces: each a tone step from the next, never white on grey */
+  --bg: #e4e0d7; /* public page paper */
+  --surface: #d6d1c6; /* a field one step darker than the page */
+  --ground: #e2ded5; /* app canvas */
+  --panel: #eeeae3; /* app panels, inputs */
+  --raised: #e8e4dc;
+  --active: #d6d1c6; /* selected nav row */
 
   /* Lines (app screens only) */
-  --border: #cfcdc7;
-  --rule: #dad8d3;
-  --control: #a9a79f;
+  --border: #cfcabf;
+  --rule: #dcd7cd;
+  --control: #a29d92;
 
   /* Text */
-  --ink: #26251e;
-  --muted: #57554d;
+  --ink: #24221c;
+  --muted: #57544b;
 
   /* Action and data */
   --accent: #2456d6;
   --accent-hover: #1d48b8;
   --accent-ink: #ffffff;
-  --primary: #26251e;
-  --primary-hover: #3a392f;
-  --primary-ink: #f1f0ed;
+  --primary: #24221c;
+  --primary-hover: #38362e;
+  --primary-ink: #eeeae3;
+
+  /* The six travel hues, text-safe (4.5:1) on --panel, with the ink that sits on a fill of each */
+  --hue-cobalt: #2456d6;
+  --hue-sea: #0e7470;
+  --hue-vermilion: #b93d0b;
+  --hue-saffron: #835f00;
+  --hue-rose: #ad2257;
+  --hue-moss: #48720e;
+  --on-hue: #ffffff;
+  /* How much of a hue tints a chip or field: pale enough for ink on top */
+  --tint: 16%;
 
   /* Status (text-safe at 4.5:1 on --panel) */
   --positive: #1f6b45;
   --negative: #a8261d;
-  --negative-bg: #f6e3df;
+  --negative-bg: #f3dfda;
+  --warning: #835f00;
+  --warning-bg: #f1e4c4;
 
   /* Inverted field for the dark half of split sections */
   --night: #1b1a15;
@@ -63,26 +77,36 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     color-scheme: dark;
-    --bg: #12120f;
-    --surface: #1b1b17;
-    --ground: #12120f;
-    --panel: #1b1b17;
-    --raised: #22221d;
-    --active: #2c2b25;
-    --border: #2e2d27;
-    --rule: #24231f;
-    --control: #57564d;
-    --ink: #ecebe6;
-    --muted: #b0aea5;
+    --bg: #151513;
+    --surface: #1d1c1a;
+    --ground: #151513;
+    --panel: #201f1c;
+    --raised: #282723;
+    --active: #302f2a;
+    --border: #2f2e2a;
+    --rule: #262522;
+    --control: #5a5850;
+    --ink: #eeede8;
+    --muted: #b3b0a6;
     --accent: #7d9dff;
     --accent-hover: #9ab3ff;
     --accent-ink: #0d1020;
-    --primary: #ecebe6;
+    --primary: #eeede8;
     --primary-hover: #ffffff;
-    --primary-ink: #12120f;
+    --primary-ink: #151513;
+    --hue-cobalt: #7d9dff;
+    --hue-sea: #4cc3bf;
+    --hue-vermilion: #ff8a5c;
+    --hue-saffron: #f2c14e;
+    --hue-rose: #f27aa8;
+    --hue-moss: #9acd6b;
+    --on-hue: #12110f;
+    --tint: 22%;
     --positive: #5cc48a;
     --negative: #f2786e;
     --negative-bg: #2c1a18;
+    --warning: #f2c14e;
+    --warning-bg: #2d2615;
     --night: #08080a;
     --night-ink: #ecebe6;
     --night-muted: #b0aea5;
@@ -91,26 +115,36 @@
 
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --bg: #12120f;
-  --surface: #1b1b17;
-  --ground: #12120f;
-  --panel: #1b1b17;
-  --raised: #22221d;
-  --active: #2c2b25;
-  --border: #2e2d27;
-  --rule: #24231f;
-  --control: #57564d;
-  --ink: #ecebe6;
-  --muted: #b0aea5;
+  --bg: #151513;
+  --surface: #1d1c1a;
+  --ground: #151513;
+  --panel: #201f1c;
+  --raised: #282723;
+  --active: #302f2a;
+  --border: #2f2e2a;
+  --rule: #262522;
+  --control: #5a5850;
+  --ink: #eeede8;
+  --muted: #b3b0a6;
   --accent: #7d9dff;
   --accent-hover: #9ab3ff;
   --accent-ink: #0d1020;
-  --primary: #ecebe6;
+  --primary: #eeede8;
   --primary-hover: #ffffff;
-  --primary-ink: #12120f;
+  --primary-ink: #151513;
+  --hue-cobalt: #7d9dff;
+  --hue-sea: #4cc3bf;
+  --hue-vermilion: #ff8a5c;
+  --hue-saffron: #f2c14e;
+  --hue-rose: #f27aa8;
+  --hue-moss: #9acd6b;
+  --on-hue: #12110f;
+  --tint: 22%;
   --positive: #5cc48a;
   --negative: #f2786e;
   --negative-bg: #2c1a18;
+  --warning: #f2c14e;
+  --warning-bg: #2d2615;
   --night: #08080a;
   --night-ink: #ecebe6;
   --night-muted: #b0aea5;
@@ -137,6 +171,9 @@
   --color-positive: var(--positive);
   --color-negative: var(--negative);
   --color-negative-bg: var(--negative-bg);
+  --color-warning: var(--warning);
+  --color-warning-bg: var(--warning-bg);
+  --color-on-hue: var(--on-hue);
   --color-night: var(--night);
   --color-night-ink: var(--night-ink);
   --color-night-muted: var(--night-muted);
@@ -203,6 +240,25 @@
 }
 
 @layer components {
+  /*
+   * Things that wear a travel hue set --hue on themselves (see src/lib/hues.ts). A chip is a pale
+   * tint with ink on top; a fill is the full hue with its own ink; a mark is a small solid swatch.
+   */
+  .hue-chip {
+    background: color-mix(in oklab, var(--hue) var(--tint), var(--panel));
+    color: var(--ink);
+  }
+  .hue-fill {
+    background: var(--hue);
+    color: var(--on-hue);
+  }
+  .hue-mark {
+    background: var(--hue);
+  }
+  .hue-text {
+    color: var(--hue);
+  }
+
   /* Press feedback for anything pressable: subtle scale, fast, never on keyboard focus. */
   .pressable {
     transition:
@@ -229,6 +285,35 @@
   }
 }
 
+/* Trip pins: numbered, in their day's hue. They lift when their stop is pointed at anywhere. */
+.trip-pin {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  border: 2px solid #fff;
+  background: var(--hue);
+  color: var(--on-hue);
+  font: 700 12px/1 var(--font-text);
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.3);
+  transition:
+    transform var(--dur-quick) var(--ease-out),
+    opacity var(--dur-quick) ease;
+}
+.trip-pin.is-hot {
+  transform: translateY(-4px) scale(1.18);
+  z-index: 2;
+}
+.trip-pin.is-dim {
+  opacity: 0.35;
+}
+.trip-pin:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
 /* Mapbox draws its own controls and attribution; keep them in the page's text face. */
 html .mapboxgl-map,
 html .mapboxgl-scroll-zoom-blocker,
@@ -239,6 +324,10 @@ html .mapboxgl-touch-pan-blocker {
 @media (prefers-reduced-motion: reduce) {
   .pressable:active:not(:disabled) {
     transform: none;
+  }
+  .trip-pin.is-hot {
+    transform: none;
+    outline: 2px solid var(--ink);
   }
   .reveal-armed [data-reveal] {
     transform: none;

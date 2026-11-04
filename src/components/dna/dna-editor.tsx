@@ -12,6 +12,7 @@ import {
   PACES,
   PACE_LABELS,
 } from "@/lib/dna/schemas";
+import { INTEREST_HUE, hueStyle } from "@/lib/hues";
 import type { Interest } from "@/lib/interests";
 import { FormMessage } from "@/components/ui/form-message";
 import { SubmitButton } from "@/components/ui/submit-button";
@@ -28,17 +29,22 @@ type Props = {
   companions: string[];
 };
 
-function Bar({ weight }: { weight: number }) {
-  // A diverging bar: right of centre is a pull towards, left is a pull away.
-  const width = `${Math.abs(weight) * 50}%`;
+function Bar({ weight, interest }: { weight: number; interest: Interest }) {
+  // A diverging bar: right of centre is a pull towards (in the interest's hue), left a pull away.
+  // It grows with a transform, not a width change, so nudging stays smooth.
+  const positive = weight >= 0;
   return (
     <div aria-hidden="true" className="relative h-2 w-full rounded-full bg-raised">
       <div className="absolute top-0 bottom-0 left-1/2 w-px bg-control" />
       <div
-        className={`absolute top-0 bottom-0 rounded-full transition-[width] duration-200 ease-[var(--ease-out)] ${
-          weight >= 0 ? "left-1/2 bg-accent" : "right-1/2 bg-control"
+        style={{
+          ...hueStyle(INTEREST_HUE[interest]),
+          transform: `scaleX(${Math.abs(weight)})`,
+          transformOrigin: positive ? "left" : "right",
+        }}
+        className={`absolute top-0 bottom-0 w-1/2 rounded-full transition-transform duration-200 ease-[var(--ease-out)] motion-reduce:transition-none ${
+          positive ? "hue-mark left-1/2" : "right-1/2 bg-control"
         }`}
-        style={{ width }}
       />
     </div>
   );
@@ -86,7 +92,7 @@ export function DnaEditor({ traits, pace, budget, companions }: Props) {
                       className="h-2 w-full rounded-full border border-dashed border-control"
                     />
                   ) : (
-                    <Bar weight={weight} />
+                    <Bar weight={weight} interest={interest} />
                   )}
                   {because.length > 0 ? (
                     <p className="pt-1.5 text-meta text-muted">From: {because.join(" · ")}</p>

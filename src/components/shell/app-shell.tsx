@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { Mark, Wordmark } from "@/components/brand/mark";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { signOut } from "@/lib/auth/actions";
+import { SECTION_HUE, hueStyle } from "@/lib/hues";
 import { Avatar } from "./avatar";
 import { DnaIcon } from "./icons";
 import { NAV_ITEMS, isActivePath } from "./nav-items";
@@ -47,13 +48,14 @@ export function AppShell({ user, children }: { user: ShellUser; children: React.
                 key={href}
                 href={href}
                 aria-current={active ? "page" : undefined}
+                style={hueStyle(SECTION_HUE[href] ?? "cobalt")}
                 className={`flex min-h-9 items-center gap-2.5 rounded-control px-2.5 text-ui transition-colors duration-150 ${
                   active
                     ? "bg-active font-semibold text-ink"
                     : "text-muted hover:bg-raised hover:text-ink"
                 }`}
               >
-                <Icon />
+                <Icon className="hue-text" />
                 {label}
               </Link>
             );
@@ -64,13 +66,14 @@ export function AppShell({ user, children }: { user: ShellUser; children: React.
           <Link
             href="/dna"
             aria-current={onDna ? "page" : undefined}
+            style={hueStyle(SECTION_HUE["/dna"] ?? "rose")}
             className={`flex min-h-9 items-center gap-2.5 rounded-control px-2.5 text-ui transition-colors duration-150 ${
               onDna
                 ? "bg-active font-semibold text-ink"
                 : "text-muted hover:bg-raised hover:text-ink"
             }`}
           >
-            <DnaIcon />
+            <DnaIcon className="hue-text" />
             Travel DNA
           </Link>
         </nav>
@@ -135,11 +138,12 @@ export function AppShell({ user, children }: { user: ShellUser; children: React.
               key={href}
               href={href}
               aria-current={active ? "page" : undefined}
+              style={hueStyle(SECTION_HUE[href] ?? "cobalt")}
               className={`pressable flex min-h-14 flex-col items-center justify-center gap-1 text-meta ${
                 active ? "font-semibold text-ink" : "text-muted"
               }`}
             >
-              <Icon className={active ? "text-accent" : ""} />
+              <Icon className={active ? "hue-text" : ""} />
               {label}
             </Link>
           );

@@ -18,6 +18,12 @@ const serverEnvSchema = z.object({
     .regex(/^[a-z0-9.-]+$/)
     .default("gemini-3.5-flash-lite"),
   AI_DAILY_LIMIT: z.coerce.number().int().min(0).max(1000).default(30),
+  // Optional: real travel times from Mapbox Directions. A public token with default scopes is
+  // enough; secret (sk.) tokens are refused so the server never holds more access than it needs.
+  MAPBOX_SERVER_TOKEN: z
+    .string()
+    .regex(/^pk\.[A-Za-z0-9._-]{20,}$/, "must be a public pk. token")
+    .optional(),
   // "1" swaps Gemini, OpenStreetMap and Wikimedia for local fixtures (tests); never in normal use.
   VOYAGER_FIXTURES: z.enum(["0", "1"]).default("0"),
 });
@@ -44,6 +50,7 @@ export function serverEnv(): ServerEnv {
     GEMINI_MODEL: process.env.GEMINI_MODEL,
     GEMINI_FALLBACK_MODEL: process.env.GEMINI_FALLBACK_MODEL,
     AI_DAILY_LIMIT: process.env.AI_DAILY_LIMIT,
+    MAPBOX_SERVER_TOKEN: process.env.MAPBOX_SERVER_TOKEN,
     VOYAGER_FIXTURES: process.env.VOYAGER_FIXTURES,
   });
   return cached;

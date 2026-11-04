@@ -17,4 +17,12 @@ describe("parseServerEnv", () => {
       /^(?!.*short-secret).*GEMINI_API_KEY/,
     );
   });
+
+  it("accepts a public Mapbox token for the server and refuses secret ones", () => {
+    const token = "pk.EXAMPLEEXAMPLEEXAMPLEEXAMPLE.EXAMPLE";
+    expect(parseServerEnv({ MAPBOX_SERVER_TOKEN: token }).MAPBOX_SERVER_TOKEN).toBe(token);
+    expect(() =>
+      parseServerEnv({ MAPBOX_SERVER_TOKEN: "sk.EXAMPLEEXAMPLEEXAMPLEEXAMPLE.EXAMPLE" }),
+    ).toThrow(/^(?!.*sk\.EXAMPLE).*MAPBOX_SERVER_TOKEN/);
+  });
 });

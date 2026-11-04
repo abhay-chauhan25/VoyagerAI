@@ -34,3 +34,6 @@ supabase/signing_keys.json
 
 # generated local seed data
 supabase/seed/
+
+# written by `next dev` for coding agents
+AGENTS.md

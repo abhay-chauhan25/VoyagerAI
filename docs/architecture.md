@@ -11,6 +11,8 @@ src/
     (app)/                   drift, trips, atlas, notes, dna, account (signed-in, app shell)
     u/[handle]/              public profile (anyone, if the owner made it public)
     (app)/drift/[cityId]     a city's places deck
+    (app)/trips/new          Compose form
+    (app)/trips/[tripId]     Trip Canvas
     api/cities/route.ts      city typeahead (signed-in)
     auth/callback/route.ts   exchanges email-link codes for a session
     globals.css              design tokens (light + dark) and base styles
@@ -20,6 +22,8 @@ src/
     atlas/                   Mapbox globe, city search, add-place form, visit list, stats strip
     deck/                    the shared swipe deck (gestures, keys, buttons)
     drift/                   Drift cards, deck, Ask Compass, saved list
+    map/                     shared Mapbox hook (Standard style, day/night lighting)
+    trips/                   trip cards, Compose form, canvas, day column, stop row, map, change requests
   lib/
     env.ts                   validated public configuration
     interests.ts             the shared interest vocabulary
@@ -32,6 +36,10 @@ src/
     ai/                      Gemini wrapper, untrusted-text handling, daily quota
     places/                  OpenStreetMap, Wikipedia nearby, Wikivoyage/Wikipedia summaries, Commons photos
     drift/                   card schemas, prompts, ranking, grounding, deck builders, search, actions
+    trips/                   compose engine, schedule, opening hours, routing, change rules, prompts,
+                             queries, view model, actions
+    hues.ts                  the six travel hues and what each encodes
+    geo.ts                   great-circle distance
     user/                    current user, public profile lookup, initials and avatar hues
   proxy.ts                   runs on every request: session refresh + route guard
 scripts/data/
@@ -94,8 +102,8 @@ a scene that merely hints at an interest cannot max it out. Interests no scene t
   so the two can never disagree. Unique per city and per country-only entry.
 - The globe (`mapbox-gl`, globe projection) fills visited countries from Natural Earth outlines and
   draws cities as points. It opens centred on the traveller's places (spherical centroid, or fitted
-  bounds when they are close together) and flies to each newly added city. The visible list is the
-  accessible equivalent of the map.
+  bounds when they are close together) and flies to each newly added city. At rest it turns slowly
+  until touched (never with reduced motion). The visible list is the accessible equivalent of the map.
 
 ## Drift and Compass
 
@@ -135,6 +143,31 @@ Tests never call these services: with `VOYAGER_FIXTURES=1` (set by the Playwrigh
 `providers()` returns deterministic fixtures, including a fictional city that grounding must drop
 and a request that simulates an AI outage.
 
+## Trips
+
+```text
+/trips/new ─► composeTripAction (zod-validated)
+   saves in the city (loved or "more") ─► scored by Travel DNA
+   ├─ pick the best: days × stops-per-pace (slow 3, balanced 4, full 6)
+   ├─ group into days: farthest-point seeds, capacity-limited assignment, re-centred (deterministic)
+   ├─ order each day: every order of up to 7 stops is tried (more: nearest-neighbour + 2-opt), cost
+   │    = travel time + penalties for visits outside OpenStreetMap opening hours or evening places
+   │    early; walking unless a hop is over 2 km
+   ├─ routes: Mapbox Directions per day (times + street line), else labelled straight-line estimates
+   ├─ day titles: Compass if available and within quota, else the day's best place
+   └─► create_trip() writes trip, days and stops in one transaction
+/trips/[id] ─► loadTrip ─► buildTripView: schedule from 09:30 (visit lengths + travel), opening-hour
+   state per visit, pace (busy time vs pace) and budget (price levels vs budget band) meters
+   drag / "Move to" / remove / add ─► arrange_trip(): one transaction, every stop listed once
+   ─► routes recomputed only for days whose order or mode changed (signature check)
+Ask Compass ─► Compass (ids s1/a1 in the prompt, mapped back; unknown ids dropped) or rule parser
+   ─► stored as a pending proposal; nothing changes until accepted
+   accept some ─► applyChanges (stale changes skipped) ─► touched days re-ordered ─► arrange_trip()
+```
+
+The Canvas shows drags at once and saves in the background; a failed save restores the saved order
+and says so. Times shown while saving are marked as updating.
+
 ## Database security
 
 | Table           | Owner                                             | Others signed in | Visitors       |
@@ -147,20 +180,29 @@ and a request that simulates an AI outage.
 | `saves`         | read, insert, update, delete                      | none             | none           |
 | `drift_decks`   | read, insert, update, delete                      | none             | none           |
 | `ai_usage`      | read (writes only via `consume_ai_quota()`)       | none             | none           |
+| `trips`         | read, insert, update name/date/currency, delete   | none             | none           |
+| `trip_days`     | read, insert, update title/mode/route, delete     | none             | none           |
+| `trip_stops`    | read, insert, update day/position/details, delete | none             | none           |
+| `proposals`     | read, insert, update status, delete               | none             | none           |
 
 - Every table has RLS on and explicit, column-level grants. `user_id` can appear in an update only
   because upserts re-send it; every policy pins it to the caller.
 - `profile_is_public(id)` is a `SECURITY DEFINER` helper returning only a boolean, so child-table
   policies can check visibility for visitors who cannot read `profiles` rows themselves.
+- Child rows of a trip must belong to the caller and point at the caller's own trip (`owns_trip()`).
+  `create_trip()` and `arrange_trip()` are `SECURITY INVOKER`: they run with the caller's grants and
+  policies, and only make multi-row changes atomic. A stop's place can't be rewritten after insert.
 - Emails live in `auth.users` and are never exposed through these tables.
 - `supabase/tests/*.test.sql` checks each rule, including the negative cases.
 
 ## Design system
 
 Tokens in `src/app/globals.css` define roles, not colours: `bg`, `surface`, `ground`, `panel`, `ink`,
-`muted`, `accent`, `primary`, status colours and motion curves. Dark mode redefines the same roles,
+`muted`, `accent`, `primary`, status colours, motion curves, and six travel hues (`hue-*`) that
+encode trip days, interest families and sections (`src/lib/hues.ts`). Dark mode redefines the same roles,
 either from the system preference or a saved choice (`data-theme` on `<html>`, applied before first
-paint by an inline script). The Mapbox globe reads the same tokens for its fills and atmosphere.
+paint by an inline script). Maps use Mapbox Standard and switch its light preset (day or night)
+with the theme, without reloading the style; Voyager's own layers read the same tokens.
 
 ## Configuration
 
@@ -181,6 +223,7 @@ Server-only (`src/lib/server-env.ts`):
 | `GEMINI_MODEL`          | default `gemini-3.8-flash`                                  |
 | `GEMINI_FALLBACK_MODEL` | default `gemini-3.5-flash-lite`; tried once on overload     |
 | `AI_DAILY_LIMIT`        | default 30 requests per traveller per day                   |
+| `MAPBOX_SERVER_TOKEN`   | optional public `pk.` token for Mapbox Directions           |
 | `VOYAGER_FIXTURES`      | `1` swaps external services for fixtures (end-to-end tests) |
 
 The Supabase secret / service-role key is not used by the app.

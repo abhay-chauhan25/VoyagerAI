@@ -15,12 +15,29 @@ export const DEFAULT_LABELS: Record<Reaction, string> = {
   more: "More like this",
 };
 
+/** The reaction a drag is heading towards, before it is far enough to commit. */
+function hintFor(dx: number, dy: number): Reaction {
+  if (-dy > Math.abs(dx)) return "more";
+  return dx >= 0 ? "love" : "pass";
+}
+
 export function intentFor(dx: number, dy: number, vx: number, vy: number): Reaction | null {
   if (-dy > COMMIT_DISTANCE || (-vy > COMMIT_VELOCITY && -dy > Math.abs(dx))) return "more";
   if (dx > COMMIT_DISTANCE || (vx > COMMIT_VELOCITY && dx > 0)) return "love";
   if (dx < -COMMIT_DISTANCE || (-vx > COMMIT_VELOCITY && dx < 0)) return "pass";
   return null;
 }
+
+/** How far a drag has gone towards committing, 0 to 1. Drives the peek card and the hint stamp. */
+function dragProgress(dx: number, dy: number): number {
+  return Math.min(1, Math.hypot(dx, dy) / COMMIT_DISTANCE);
+}
+
+const HINT_STYLE: Record<Reaction, string> = {
+  love: "bg-positive text-panel",
+  pass: "bg-ink text-panel",
+  more: "bg-accent text-accent-ink",
+};
 
 const EXIT_TRANSFORM: Record<Reaction, string> = {
   love: "translate(140%, 0) rotate(18deg)",
@@ -65,6 +82,8 @@ export function SwipeDeck<T>({
   const next = items[1];
 
   const cardRef = useRef<HTMLDivElement>(null);
+  const peekRef = useRef<HTMLDivElement>(null);
+  const hintRef = useRef<HTMLSpanElement>(null);
   const drag = useRef<{ id: number; x: number; y: number; t: number } | null>(null);
   const [leaving, setLeaving] = useState<Reaction | null>(null);
   const [hint, setHint] = useState<Reaction | null>(null);
@@ -84,20 +103,33 @@ export function SwipeDeck<T>({
         card.style.transform = EXIT_TRANSFORM[reaction];
         card.style.opacity = "0";
       }
+      setPeek(1, EXIT_MS);
       window.setTimeout(() => {
         setLeaving(null);
         setHint(null);
         onAnswer(current, reaction);
+        // The next card underneath starts from its resting place again.
+        setPeek(0);
       }, EXIT_MS);
     },
     [current, busy, onAnswer, reduced],
   );
+
+  /** The card underneath rises to meet the top card as it is dragged away. */
+  function setPeek(progress: number, ms = 0) {
+    const peek = peekRef.current;
+    if (!peek) return;
+    peek.style.transition = ms ? `transform ${ms}ms var(--ease-out)` : "none";
+    peek.style.transform = `translateY(${12 * (1 - progress)}px) scale(${0.96 + 0.04 * progress})`;
+  }
 
   const resetCard = () => {
     const card = cardRef.current;
     if (!card) return;
     card.style.transition = "transform 360ms var(--ease-drawer)";
     card.style.transform = "";
+    if (hintRef.current) hintRef.current.style.opacity = "0";
+    setPeek(0, 360);
     setHint(null);
   };
 
@@ -124,7 +156,11 @@ export function SwipeDeck<T>({
     cardRef.current.style.transform = reduced
       ? ""
       : `translate(${dx}px, ${dy}px) rotate(${dx / 22}deg)`;
-    setHint(intentFor(dx, dy, 0, 0));
+    const progress = dragProgress(dx, dy);
+    if (!reduced) setPeek(progress);
+    // The stamp fades in with the drag, so the decision is visible before it is made.
+    if (hintRef.current) hintRef.current.style.opacity = String(Math.min(1, progress * 1.4));
+    setHint(intentFor(dx, dy, 0, 0) ?? (progress > 0.35 ? hintFor(dx, dy) : null));
   };
 
   const onPointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
@@ -184,8 +220,10 @@ export function SwipeDeck<T>({
       >
         {next !== undefined && renderPeek ? (
           <div
+            ref={peekRef}
             aria-hidden="true"
-            className="absolute inset-0 translate-y-3 scale-[0.96] overflow-hidden rounded-card bg-panel"
+            style={{ transform: "translateY(12px) scale(0.96)" }}
+            className="absolute inset-0 overflow-hidden rounded-card bg-panel"
           >
             {renderPeek(next)}
           </div>
@@ -197,14 +235,20 @@ export function SwipeDeck<T>({
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
           onPointerCancel={resetCard}
+          style={{ transformOrigin: "50% 110%" }}
           className="absolute inset-0 flex cursor-grab touch-none flex-col overflow-hidden rounded-card border border-border bg-panel select-none active:cursor-grabbing"
         >
           {renderCard(current)}
-          {hint ? (
-            <span className="absolute top-4 left-4 rounded-control bg-panel px-3 py-1.5 text-ui font-semibold text-ink">
-              {labels[hint]}
-            </span>
-          ) : null}
+          <span
+            ref={hintRef}
+            aria-hidden="true"
+            style={{ opacity: 0 }}
+            className={`pointer-events-none absolute top-4 left-4 rounded-control px-3 py-1.5 text-ui font-semibold ${
+              hint ? HINT_STYLE[hint] : "invisible"
+            }`}
+          >
+            {hint ? labels[hint] : ""}
+          </span>
         </div>
       </div>
 

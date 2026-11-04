@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Screen, ScreenHeader } from "@/components/app/screen";
 import { ProfileForm } from "@/components/account/profile-form";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
@@ -13,6 +14,11 @@ export default async function AccountPage() {
   return (
     <Screen>
       <ScreenHeader
+        action={
+          <Link href="/dna" className="text-ui font-semibold underline underline-offset-4">
+            Your Travel DNA
+          </Link>
+        }
         title="Account"
         subline="How you appear to other travellers, and how Voyager looks to you."
       />
@@ -28,7 +34,23 @@ export default async function AccountPage() {
           <p className="text-ui text-muted">Signed in as {user.email}.</p>
         </div>
         <div className="rounded-card bg-panel p-5">
-          <ProfileForm displayName={user.displayName} homeCity={user.homeCity} />
+          <ProfileForm
+            displayName={user.displayName}
+            homeCity={user.homeCity}
+            handle={user.handle}
+            isPublic={user.isPublic}
+          />
+          {user.isPublic && user.handle ? (
+            <p className="mt-4 text-ui">
+              Your profile is live at{" "}
+              <Link
+                href={`/u/${user.handle}`}
+                className="font-semibold underline underline-offset-4"
+              >
+                /u/{user.handle}
+              </Link>
+            </p>
+          ) : null}
         </div>
       </section>
 

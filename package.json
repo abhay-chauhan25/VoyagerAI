@@ -22,11 +22,13 @@
     "db:reset": "supabase db reset",
     "db:types": "supabase gen types typescript --local > src/lib/supabase/database.types.ts",
     "check": "npm run lint && npm run format:check && npm run typecheck && npm run test && npm run build",
-    "test:db": "supabase test db"
+    "test:db": "supabase test db",
+    "data:cities": "node scripts/data/load-cities.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "0.12.7",
     "@supabase/supabase-js": "2.118.0",
+    "mapbox-gl": "3.33.0",
     "motion": "14.4.0",
     "next": "16.4.2",
     "react": "19.1.10",
@@ -39,6 +41,7 @@
     "@testing-library/jest-dom": "7.0.1",
     "@testing-library/react": "16.3.3",
     "@testing-library/user-event": "14.6.8",
+    "@types/geojson": "7946.0.16",
     "@types/node": "26.6.5",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",

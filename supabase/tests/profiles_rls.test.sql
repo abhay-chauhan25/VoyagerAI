@@ -25,9 +25,9 @@ select is(
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub": "11111111-1111-4111-8111-111111111111", "role": "authenticated"}', true);
 
-select is((select count(*)::int from public.profiles), 1, 'a user sees only their own profile');
+select is((select count(*)::int from public.profiles where id in ('11111111-1111-4111-8111-111111111111', '22222222-2222-4222-8222-222222222222')), 1, 'a user sees only their own profile');
 select is(
-  (select id::text from public.profiles),
+  (select id::text from public.profiles where id in ('11111111-1111-4111-8111-111111111111', '22222222-2222-4222-8222-222222222222')),
   '11111111-1111-4111-8111-111111111111',
   'the visible profile is the user''s own'
 );
@@ -66,15 +66,10 @@ select throws_ok(
   'a blank display name is rejected'
 );
 
--- Anonymous visitors see nothing.
+-- Anonymous visitors see nothing while every profile is private (the default).
 reset role;
 set local role anon;
-select throws_ok(
-  $$ select * from public.profiles $$,
-  '42501',
-  null,
-  'anon has no access to profiles'
-);
+select is((select count(*)::int from public.profiles where id in ('11111111-1111-4111-8111-111111111111', '22222222-2222-4222-8222-222222222222')), 0, 'visitors see no private profiles');
 
 reset role;
 select is(

@@ -63,12 +63,44 @@ export async function signUp(
   await expect(page.getByRole("heading", { name: "Check your email" })).toBeVisible();
 }
 
-/** Signs up and confirms through the emailed link, ending signed in on Trips. */
+/** Signs up and confirms through the emailed link, ending signed in on the Travel DNA deck. */
 export async function signUpAndConfirm(
   page: Page,
   opts: { name: string; email: string; password: string; tripIdea?: string },
 ) {
   await signUp(page, opts);
   await page.goto(await authLinkFor(page, opts.email));
-  await expect(page).toHaveURL(/\/trips$/);
+  await expect(page).toHaveURL(/\/welcome$/);
+}
+
+/** Answers the whole deck with buttons and the three questions, ending on the Travel DNA page. */
+export async function completeOnboarding(
+  page: Page,
+  answer: (index: number) => string = () => "Love it",
+) {
+  for (let i = 0; i < 12; i += 1) {
+    await expect(page.getByText(`${i + 1} of 12`)).toBeVisible();
+    await page.getByRole("button", { name: answer(i), exact: true }).click();
+  }
+  await page.getByText("Slow", { exact: true }).click();
+  await page.getByText("Comfortable", { exact: true }).click();
+  await page.getByText("With friends", { exact: true }).click();
+  await page.getByRole("button", { name: "See my Travel DNA" }).click();
+  await expect(page).toHaveURL(/\/dna$/);
+}
+
+/**
+ * Types into the city search until results appear. Retrying covers typing that lands before the
+ * page has finished hydrating, which a person can't do but a test can.
+ */
+export async function pickCity(page: Page, query: string, optionName: RegExp) {
+  const box = page.getByRole("combobox", { name: "City" });
+  await expect(async () => {
+    await box.fill("");
+    await box.fill(query);
+    await expect(page.getByRole("option", { name: optionName }).first()).toBeVisible({
+      timeout: 2_000,
+    });
+  }).toPass({ timeout: 15_000 });
+  await page.getByRole("option", { name: optionName }).first().click();
 }

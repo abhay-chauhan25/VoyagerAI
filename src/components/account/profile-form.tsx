@@ -7,13 +7,14 @@ import { FormMessage } from "@/components/ui/form-message";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { TextField } from "@/components/ui/text-field";
 
-export function ProfileForm({
-  displayName,
-  homeCity,
-}: {
+type Props = {
   displayName: string;
   homeCity: string | null;
-}) {
+  handle: string | null;
+  isPublic: boolean;
+};
+
+export function ProfileForm({ displayName, homeCity, handle, isPublic }: Props) {
   const [state, action] = useActionState(updateProfile, initialFormState);
 
   return (
@@ -36,6 +37,31 @@ export function ProfileForm({
         defaultValue={state.values?.homeCity ?? homeCity ?? ""}
         error={state.fieldErrors?.homeCity}
       />
+      <TextField
+        label="Handle"
+        name="handle"
+        autoComplete="username"
+        maxLength={30}
+        spellCheck={false}
+        hint="Your public address, /u/your_handle: 3–30 lowercase letters, numbers or underscores."
+        defaultValue={state.values?.handle ?? handle ?? ""}
+        error={state.fieldErrors?.handle}
+      />
+      <label className="flex items-start gap-3 text-ui">
+        <input
+          type="checkbox"
+          name="isPublic"
+          defaultChecked={state.values ? state.values.isPublic === "on" : isPublic}
+          className="mt-1 size-4 accent-[var(--accent)]"
+        />
+        <span className="flex flex-col">
+          <span className="font-semibold">Public profile</span>
+          <span className="text-meta text-muted">
+            Anyone with the link sees your name, home city, Atlas and top Travel DNA interests.
+            Never your email.
+          </span>
+        </span>
+      </label>
       <FormMessage state={state} />
       <SubmitButton className="self-start" pendingLabel="Saving…">
         Save profile

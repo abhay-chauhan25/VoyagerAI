@@ -229,6 +229,13 @@
   }
 }
 
+/* Mapbox draws its own controls and attribution; keep them in the page's text face. */
+html .mapboxgl-map,
+html .mapboxgl-scroll-zoom-blocker,
+html .mapboxgl-touch-pan-blocker {
+  font-family: var(--font-text);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .pressable:active:not(:disabled) {
     transform: none;

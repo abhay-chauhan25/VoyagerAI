@@ -59,7 +59,8 @@ Browser ──► Next.js 16 (App Router, React 19, TypeScript strict)
               Mailpit (captures auth emails locally)
 
 Later stages add, server-side only:
-  Gemini API (Compass)  ·  Google Places API (New) (grounding)  ·  Mapbox (maps, travel times)
+  Gemini API (Compass)  ·  free place data (OpenStreetMap, Wikipedia/Wikivoyage, Wikimedia
+  Commons, GeoNames) for grounding  ·  Mapbox (maps, travel times)
   Open-Meteo (weather, no key)
 ```
 
@@ -77,51 +78,52 @@ Principles:
 
 ## 4. Decisions log
 
-| Decision   | Choice                          | Why                                                                                                                         |
-| ---------- | ------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| Framework  | Next.js 16 + TypeScript         | One app for UI and server code; Server Actions keep secrets server-side.                                                    |
-| Backend    | Supabase only (no Firebase)     | Relational data, RLS, PostGIS, Realtime, local Docker stack.                                                                |
-| Hosting    | Local only                      | The owner does not plan to deploy.                                                                                          |
-| Sign-in    | Email + password and magic link | Works fully offline with local Supabase; no OAuth setup.                                                                    |
-| AI         | Gemini API (free tier)          | Owner's choice. Free-tier prompts may be used by Google to improve products, so only synthetic data is used in development. |
-| Places     | Google Places API (New)         | Opening hours, ratings, photos; quota-capped and cached.                                                                    |
-| Maps       | Mapbox GL JS                    | Globe projection, styles, directions/matrix.                                                                                |
-| TypeScript | 6.0.3                           | typescript-eslint supports `<6.1`; TypeScript 7 is not yet supported by the linter.                                         |
+| Decision   | Choice                                                                                                                                                                       | Why                                                                                                                         |
+| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| Framework  | Next.js 16 + TypeScript                                                                                                                                                      | One app for UI and server code; Server Actions keep secrets server-side.                                                    |
+| Backend    | Supabase only (no Firebase)                                                                                                                                                  | Relational data, RLS, PostGIS, Realtime, local Docker stack.                                                                |
+| Hosting    | Local only                                                                                                                                                                   | The owner does not plan to deploy.                                                                                          |
+| Sign-in    | Email + password and magic link                                                                                                                                              | Works fully offline with local Supabase; no OAuth setup.                                                                    |
+| AI         | Gemini API (free tier)                                                                                                                                                       | Owner's choice. Free-tier prompts may be used by Google to improve products, so only synthetic data is used in development. |
+| Places     | Free sources only: GeoNames (cities, local), OpenStreetMap via Overpass (points of interest, opening hours), Wikipedia/Wikivoyage (descriptions), Wikimedia Commons (photos) | Owner's rule: no paid place APIs. All are free and openly licensed; results are cached and credited.                        |
+| Maps       | Mapbox GL JS                                                                                                                                                                 | Globe projection, styles, directions/matrix.                                                                                |
+| TypeScript | 6.0.3                                                                                                                                                                        | typescript-eslint supports `<6.1`; TypeScript 7 is not yet supported by the linter.                                         |
 
 ## 5. Data model (planned; grows per stage)
 
-- `profiles` — one per user (display name, home city). Created by trigger on sign-up. **(built)**
-- `travel_dna` — weighted interest tags, pace, budget band, travel style.
+- `profiles` — one per user (display name, home city, handle, public flag). Created by trigger on sign-up. **(built)**
+- `travel_dna` — interest weights, pace, budget band, companions. **(built)**
+- `dna_reactions` — each onboarding answer, kept to explain traits. **(built)**
 - `places` — cached, grounded place records (provider id, name, location, hours, photo refs).
 - `saves` — a user's Drift decisions (place, verdict, reason shown).
 - `trips`, `trip_members` (role: owner/editor/viewer), `trip_days`, `trip_stops`.
 - `proposals` — AI change sets awaiting accept/reject.
 - `votes` — Huddle decisions.
-- `visits` — Atlas entries (country/city, date, source trip).
+- `cities` — GeoNames reference list (34k places, 15,000+ people), loaded locally. **(built)**
+- `visits` — Atlas entries (country, optional city, optional year). **(built)**
 - `notes`, `note_photos`, `follows` — Field Notes.
 
 ## 6. Stages
 
 Each stage ends with checks passing, one commit, a push and a report, then waits for approval.
 
-| #   | Stage                        | Outcome                                                                                                                                                                              |
-| --- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 1   | **Foundation**               | Next.js + TypeScript, design system, local Supabase, email/password + magic-link auth, profiles with RLS, app shell, landing page, lint/format/typecheck/unit/e2e/DB tests, CI.      |
-| 2   | **Travel DNA + Atlas**       | Swipe-based taste onboarding, editable profile and preferences, interactive Mapbox world map of visited places, public profile page.                                                 |
-| 3   | **Drift + Compass AI layer** | Gemini-backed destination/activity cards grounded with Google Places, swipe deck, natural-language search on a globe, saves. Schema validation, fallbacks, caching, per-user quotas. |
-| 4   | **Trip Canvas + Compose**    | Trips, day timeline linked to the map, drag and drop, AI-composed itineraries using real travel times, budget and pace meters, accept/reject proposals. **MVP complete.**            |
-| 5   | **Huddle**                   | Invites and roles, live co-editing with presence, Group Drift, voting, Consensus planning.                                                                                           |
-| 6   | **Field Notes**              | Follows, reviews, ratings, photo uploads, feed, Fork-a-trip, AI-drafted trip stories.                                                                                                |
-| 7   | **Polish**                   | Accessibility and performance passes, full end-to-end coverage, demo seed data, docs, one-command local setup. No deployment.                                                        |
+| #   | Stage                        | Outcome                                                                                                                                                                                                                                    |
+| --- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1   | **Foundation**               | Next.js + TypeScript, design system, local Supabase, email/password + magic-link auth, profiles with RLS, app shell, landing page, lint/format/typecheck/unit/e2e/DB tests, CI.                                                            |
+| 2   | **Travel DNA + Atlas**       | Swipe-based taste onboarding, editable profile and preferences, interactive Mapbox world map of visited places, public profile page.                                                                                                       |
+| 3   | **Drift + Compass AI layer** | Gemini-backed destination/activity cards grounded in free place data (GeoNames, OpenStreetMap, Wikivoyage, Commons photos), swipe deck, natural-language search on a globe, saves. Schema validation, fallbacks, caching, per-user quotas. |
+| 4   | **Trip Canvas + Compose**    | Trips, day timeline linked to the map, drag and drop, AI-composed itineraries using real travel times, budget and pace meters, accept/reject proposals. **MVP complete.**                                                                  |
+| 5   | **Huddle**                   | Invites and roles, live co-editing with presence, Group Drift, voting, Consensus planning.                                                                                                                                                 |
+| 6   | **Field Notes**              | Follows, reviews, ratings, photo uploads, feed, Fork-a-trip, AI-drafted trip stories.                                                                                                                                                      |
+| 7   | **Polish**                   | Accessibility and performance passes, full end-to-end coverage, demo seed data, docs, one-command local setup. No deployment.                                                                                                              |
 
 **MVP**: sign up → build Travel DNA → swipe and save in Drift → Compose a trip → view and edit it on
 the map. Working at the end of Stage 4.
 
 ## 7. Accounts and keys needed
 
-| When    | What                                                                              | Where it goes                                 |
-| ------- | --------------------------------------------------------------------------------- | --------------------------------------------- |
-| Stage 1 | Docker Desktop running                                                            | —                                             |
-| Stage 2 | Mapbox account, **public** token (`pk.…`) restricted to `http://localhost:3000`   | `.env`: `NEXT_PUBLIC_MAPBOX_TOKEN`            |
-| Stage 3 | Gemini API key (Google AI Studio)                                                 | `.env`: `GEMINI_API_KEY` (server only)        |
-| Stage 3 | Google Places API (New) key, restricted to the Places API, with a daily quota cap | `.env`: `GOOGLE_PLACES_API_KEY` (server only) |
+| When    | What                                                                            | Where it goes                          |
+| ------- | ------------------------------------------------------------------------------- | -------------------------------------- |
+| Stage 1 | Docker Desktop running                                                          | —                                      |
+| Stage 2 | Mapbox account, **public** token (`pk.…`) restricted to `http://localhost:3000` | `.env`: `NEXT_PUBLIC_MAPBOX_TOKEN`     |
+| Stage 3 | Gemini API key (Google AI Studio)                                               | `.env`: `GEMINI_API_KEY` (server only) |

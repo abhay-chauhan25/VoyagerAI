@@ -31,3 +31,6 @@ supabase/signing_keys.json
 
 # design tooling working files
 .taste-skill/
+
+# generated local seed data
+supabase/seed/

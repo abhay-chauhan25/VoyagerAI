@@ -76,17 +76,33 @@ describe("signInSchema and magicLinkSchema", () => {
 });
 
 describe("profileSchema", () => {
-  it("turns an empty home city into null", () => {
-    expect(profileSchema.parse({ displayName: "Kai", homeCity: "  " })).toEqual({
+  const base = { displayName: "Kai", homeCity: "", handle: "", isPublic: false };
+
+  it("turns empty optional fields into null", () => {
+    expect(profileSchema.parse({ ...base, homeCity: "  " })).toEqual({
       displayName: "Kai",
       homeCity: null,
+      handle: null,
+      isPublic: false,
     });
   });
 
-  it("rejects a too-long home city", () => {
-    expect(profileSchema.safeParse({ displayName: "Kai", homeCity: "x".repeat(81) }).success).toBe(
-      false,
-    );
+  it("lower-cases a valid handle", () => {
+    expect(profileSchema.parse({ ...base, handle: "Kai_Travels" }).handle).toBe("kai_travels");
+  });
+
+  it("rejects malformed handles and too-long cities", () => {
+    for (const handle of ["ab", "has space", "dash-es", "x".repeat(31), "émile"]) {
+      expect(profileSchema.safeParse({ ...base, handle }).success).toBe(false);
+    }
+    expect(profileSchema.safeParse({ ...base, homeCity: "x".repeat(81) }).success).toBe(false);
+  });
+
+  it("needs a handle before a profile can be public", () => {
+    const result = profileSchema.safeParse({ ...base, isPublic: true });
+    expect(result.success).toBe(false);
+    if (!result.success) expect(toFieldErrors(result.error).handle).toMatch(/Choose a handle/);
+    expect(profileSchema.safeParse({ ...base, isPublic: true, handle: "kai" }).success).toBe(true);
   });
 });
 

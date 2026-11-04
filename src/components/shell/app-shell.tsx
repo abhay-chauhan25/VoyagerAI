@@ -6,6 +6,7 @@ import { Mark, Wordmark } from "@/components/brand/mark";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { signOut } from "@/lib/auth/actions";
 import { Avatar } from "./avatar";
+import { DnaIcon } from "./icons";
 import { NAV_ITEMS, isActivePath } from "./nav-items";
 
 type ShellUser = { id: string; displayName: string; email: string };
@@ -18,6 +19,7 @@ export function AppShell({ user, children }: { user: ShellUser; children: React.
   const pathname = usePathname();
   const current = NAV_ITEMS.find((item) => isActivePath(pathname, item.href));
   const onAccount = isActivePath(pathname, "/account");
+  const onDna = isActivePath(pathname, "/dna");
 
   return (
     <div className="min-h-svh bg-ground text-ink lg:grid lg:grid-cols-[15rem_minmax(0,1fr)]">
@@ -57,6 +59,21 @@ export function AppShell({ user, children }: { user: ShellUser; children: React.
             );
           })}
         </nav>
+        <nav aria-label="You" className="flex flex-col gap-0.5">
+          <span className="px-2.5 pb-1 text-meta text-muted">You</span>
+          <Link
+            href="/dna"
+            aria-current={onDna ? "page" : undefined}
+            className={`flex min-h-9 items-center gap-2.5 rounded-control px-2.5 text-ui transition-colors duration-150 ${
+              onDna
+                ? "bg-active font-semibold text-ink"
+                : "text-muted hover:bg-raised hover:text-ink"
+            }`}
+          >
+            <DnaIcon />
+            Travel DNA
+          </Link>
+        </nav>
         <div className="mt-auto flex flex-col gap-3">
           <ThemeToggle className="mx-2 self-start" />
           <div className="flex items-center gap-1">
@@ -94,7 +111,7 @@ export function AppShell({ user, children }: { user: ShellUser; children: React.
         >
           <Mark size={22} />
           <span className="text-body font-semibold">
-            {onAccount ? "Account" : (current?.label ?? "Voyager")}
+            {onAccount ? "Account" : onDna ? "Travel DNA" : (current?.label ?? "Voyager")}
           </span>
         </Link>
         <Link href="/account" aria-label="Account" className="rounded-full">

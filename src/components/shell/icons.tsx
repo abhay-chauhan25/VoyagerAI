@@ -66,3 +66,12 @@ export function AccountIcon(props: IconProps) {
     </Svg>
   );
 }
+
+export function DnaIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M5 1.75c0 4.25 6 4.25 6 8.5s-6 1.75-6 4M11 1.75c0 4.25-6 4.25-6 8.5" />
+      <path d="M6 4.5h4M6.5 8h3M6 11.5h4" />
+    </Svg>
+  );
+}

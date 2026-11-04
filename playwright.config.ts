@@ -7,6 +7,10 @@ const baseURL = `http://localhost:${PORT}`;
 export default defineConfig({
   testDir: "./tests/e2e",
   fullyParallel: false,
+  // Pages with the WebGL globe are CPU-heavy under software rendering; two workers and a longer
+  // per-test budget keep the suite from timing out on a busy machine. Failures are never retried.
+  workers: 2,
+  timeout: 60_000,
   retries: 0,
   reporter: "list",
   use: { baseURL, trace: "retain-on-failure" },

@@ -12,8 +12,11 @@ product blueprint and stage plan, and [`docs/architecture.md`](docs/architecture
 - Accounts: sign up with email confirmation, sign in with a password or a one-time email link,
   sign out. Sessions are refreshed on every request; app pages are closed to guests.
 - Profile (display name, home city) protected by row-level security.
-- App shell with Drift, Trips, Atlas and Field Notes (honest empty states for now), day/night/auto
-  theme.
+- **Travel DNA**: a 12-scene swipe deck (drag, buttons or arrow keys) and three questions build an
+  explained taste profile you can adjust.
+- **Atlas**: a Mapbox globe of the countries and cities you've been to, with offline city search.
+- **Public profiles** at `/u/<handle>`: opt-in, showing your Atlas and top interests.
+- App shell with Drift, Trips and Field Notes (empty states for now), day/night/auto theme.
 
 ## Requirements
 
@@ -25,8 +28,11 @@ product blueprint and stage plan, and [`docs/architecture.md`](docs/architecture
 ```bash
 npm install
 npm run db:start                 # starts local Supabase in Docker (first run downloads images)
+npm run data:cities              # downloads the GeoNames city list (~3 MB) into a local seed file
+npm run db:reset                 # applies migrations and loads the cities
 cp .env.example .env && chmod 600 .env
 npx supabase status -o env       # copy API_URL and PUBLISHABLE_KEY into .env
+# add your Mapbox public token (pk.…) as NEXT_PUBLIC_MAPBOX_TOKEN in .env
 npm run dev                      # http://localhost:3000
 ```
 
@@ -49,8 +55,15 @@ Emails (confirmations, sign-in links) never leave your machine: open the local i
 CI (GitHub Actions) runs lint, format, typecheck, unit tests and build, plus the database tests on a
 local Postgres. End-to-end tests run locally.
 
-## Picture credits
+## Data and picture credits
+
+- Cities: [GeoNames](https://www.geonames.org/) (CC BY 4.0). Country outlines: Natural Earth
+  (public domain). Continents: GeoNames country info (CC BY 4.0).
+- Maps: © Mapbox © OpenStreetMap.
+
+### Pictures
 
 The landing and sign-in pages use openly licensed photographs and public-domain maps of Lisbon from
 Wikimedia Commons. Every credit is listed on the landing page footer and in
-`public/images/landing/credits.json`.
+`public/images/landing/credits.json`; Travel DNA scene photos are credited in
+`public/images/scenes/credits.json`.

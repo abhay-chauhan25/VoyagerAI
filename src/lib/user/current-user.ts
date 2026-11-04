@@ -7,6 +7,8 @@ export type CurrentUser = {
   email: string;
   displayName: string;
   homeCity: string | null;
+  handle: string | null;
+  isPublic: boolean;
   tripIdea: string | null;
 };
 
@@ -23,7 +25,7 @@ export const requireUser = cache(async (nextPath: string): Promise<CurrentUser> 
   const user = data.user;
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
-    .select("display_name, home_city")
+    .select("display_name, home_city, handle, is_public")
     .eq("id", user.id)
     .single();
 
@@ -38,6 +40,8 @@ export const requireUser = cache(async (nextPath: string): Promise<CurrentUser> 
     email: user.email ?? "",
     displayName: profile.display_name,
     homeCity: profile.home_city,
+    handle: profile.handle,
+    isPublic: profile.is_public,
     tripIdea: typeof tripIdea === "string" && tripIdea.trim() ? tripIdea.trim() : null,
   };
 });

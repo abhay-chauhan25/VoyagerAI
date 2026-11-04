@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Wordmark } from "@/components/brand/mark";
 import { ButtonLink } from "@/components/ui/button";
 import { BriefDemo } from "@/components/landing/brief-demo";
-import { PictureCredits } from "@/components/landing/credits";
+import { PictureCredits } from "@/components/credits/picture-credits";
 import { FirstTripCta } from "@/components/landing/first-trip-cta";
 import { Gallery } from "@/components/landing/gallery";
 import { HeroStage } from "@/components/landing/hero-stage";

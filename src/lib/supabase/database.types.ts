@@ -23,19 +23,99 @@ export type Database = {
           }
         },"public": {
           Tables: {
-            "profiles": {
+            "cities": {
                   Row: {
-                    "created_at": string,"display_name": string,"home_city": string | null,"id": string,"updated_at": string
+                    "ascii_name": string,"country_code": string,"geoname_id": number,"latitude": number,"longitude": number,"name": string,"population": number,"region": string | null,"timezone": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "created_at"?: string,"display_name": string,"home_city"?: string | null,"id": string,"updated_at"?: string
+                    "ascii_name": string,"country_code": string,"geoname_id": number,"latitude": number,"longitude": number,"name": string,"population"?: number,"region"?: string | null,"timezone"?: string | null
                   }
                   Update: {
-                    "created_at"?: string,"display_name"?: string,"home_city"?: string | null,"id"?: string,"updated_at"?: string
+                    "ascii_name"?: string,"country_code"?: string,"geoname_id"?: number,"latitude"?: number,"longitude"?: number,"name"?: string,"population"?: number,"region"?: string | null,"timezone"?: string | null
                   }
                   Relationships: [
                     
+                  ]
+                },"dna_reactions": {
+                  Row: {
+                    "created_at": string,"reaction": Database["public"]['Enums']["dna_reaction"],"scene_id": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"reaction": Database["public"]['Enums']["dna_reaction"],"scene_id": string,"user_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"reaction"?: Database["public"]['Enums']["dna_reaction"],"scene_id"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "dna_reactions_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"profiles": {
+                  Row: {
+                    "created_at": string,"display_name": string,"handle": string | null,"home_city": string | null,"id": string,"is_public": boolean,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"display_name": string,"handle"?: string | null,"home_city"?: string | null,"id": string,"is_public"?: boolean,"updated_at"?: string
+                  }
+                  Update: {
+                    "created_at"?: string,"display_name"?: string,"handle"?: string | null,"home_city"?: string | null,"id"?: string,"is_public"?: boolean,"updated_at"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"travel_dna": {
+                  Row: {
+                    "budget": Database["public"]['Enums']["budget_band"],"companions": (string)[],"completed_at": string,"interest_weights": NonNullable<Json>,"pace": Database["public"]['Enums']["travel_pace"],"updated_at": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "budget": Database["public"]['Enums']["budget_band"],"companions"?: (string)[],"completed_at"?: string,"interest_weights"?: NonNullable<Json>,"pace": Database["public"]['Enums']["travel_pace"],"updated_at"?: string,"user_id": string
+                  }
+                  Update: {
+                    "budget"?: Database["public"]['Enums']["budget_band"],"companions"?: (string)[],"completed_at"?: string,"interest_weights"?: NonNullable<Json>,"pace"?: Database["public"]['Enums']["travel_pace"],"updated_at"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "travel_dna_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: true
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"visits": {
+                  Row: {
+                    "city_id": number | null,"country_code": string,"created_at": string,"id": string,"user_id": string,"visited_year": number | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "city_id"?: number | null,"country_code": string,"created_at"?: string,"id"?: string,"user_id"?: string,"visited_year"?: number | null
+                  }
+                  Update: {
+                    "city_id"?: number | null,"country_code"?: string,"created_at"?: string,"id"?: string,"user_id"?: string,"visited_year"?: number | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "visits_city_id_fkey"
+      columns: ["city_id"]
+isOneToOne: false
+      referencedRelation: "cities"
+      referencedColumns: ["geoname_id"]
+    },{
+      foreignKeyName: "visits_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
                   ]
                 }
           }
@@ -43,10 +123,30 @@ export type Database = {
             [_ in never]: never
           }
           Functions: {
-            [_ in never]: never
+            "profile_is_public":
+{ Args: { "profile_id": string }; Returns: boolean
+                           },
+"search_cities":
+{ Args: { "max_results"?: number,"query": string }; Returns: {
+              "ascii_name": string,
+"country_code": string,
+"geoname_id": number,
+"latitude": number,
+"longitude": number,
+"name": string,
+"population": number,
+"region": string | null,
+"timezone": string | null
+            }[]
+                          SetofOptions: {
+        from: "*"
+        to: "cities"
+        isOneToOne: false
+        isSetofReturn: true
+      } }
           }
           Enums: {
-            [_ in never]: never
+            "budget_band": "shoestring"|"comfortable"|"splurge","dna_reaction": "pass"|"love"|"more","travel_pace": "slow"|"balanced"|"full"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -166,7 +266,7 @@ export const Constants = {
           }
         },"public": {
           Enums: {
-            
+            "budget_band": ["shoestring", "comfortable", "splurge"],"dna_reaction": ["pass", "love", "more"],"travel_pace": ["slow", "balanced", "full"]
           }
         }
 } as const

@@ -1,5 +1,6 @@
 import { z } from "zod";
-import rawCredits from "../../../public/images/landing/credits.json";
+import landingCredits from "../../../public/images/landing/credits.json";
+import sceneCredits from "../../../public/images/scenes/credits.json";
 
 const creditSchema = z.array(
   z.object({
@@ -12,11 +13,17 @@ const creditSchema = z.array(
   }),
 );
 
-// Validated at build time: a malformed credits file breaks the build instead of shipping uncredited photos.
-const credits = creditSchema.parse(rawCredits);
+type Credit = z.infer<typeof creditSchema>[number];
 
-/** Credits for every photograph and map on the landing page, as their licences require. */
-export function PictureCredits() {
+// Validated at build time: a malformed credits file breaks the build instead of shipping uncredited photos.
+const CREDITS: Record<"landing" | "scenes", Credit[]> = {
+  landing: creditSchema.parse(landingCredits),
+  scenes: creditSchema.parse(sceneCredits),
+};
+
+/** Credits for every photograph and map in a set, as their licences require. */
+export function PictureCredits({ set = "landing" }: { set?: keyof typeof CREDITS }) {
+  const credits = CREDITS[set];
   return (
     <p className="max-w-[75ch] text-meta text-muted">
       Pictures:{" "}

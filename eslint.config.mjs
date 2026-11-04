@@ -11,6 +11,11 @@ const config = [
     },
   },
   {
+    // Command-line scripts report progress on stdout by design.
+    files: ["scripts/**/*.mjs"],
+    rules: { "no-console": "off" },
+  },
+  {
     ignores: [
       ".next/**",
       "node_modules/**",

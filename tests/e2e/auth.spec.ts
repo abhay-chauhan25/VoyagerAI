@@ -39,6 +39,8 @@ test.describe("account lifecycle", () => {
       tripIdea: "Lisbon in May",
     });
 
+    // New travellers start on the Travel DNA deck and may skip it.
+    await page.getByRole("link", { name: "Skip for now" }).click();
     await expect(page.getByRole("heading", { name: "Trips", level: 1 })).toBeVisible();
     await expect(page.getByText("Lisbon in May")).toBeVisible();
 
@@ -56,11 +58,11 @@ test.describe("account lifecycle", () => {
     await theme.getByRole("radio", { name: "Auto" }).click();
     await expect(page.locator("html")).not.toHaveAttribute("data-theme", /.+/);
     await page.getByLabel("Display name").fill("Ana S.");
-    await page.getByLabel("Home city").fill("Porto");
+    await page.getByLabel("Home city", { exact: true }).fill("Porto");
     await page.getByRole("button", { name: "Save profile" }).click();
     await expect(page.getByRole("status")).toHaveText("Saved");
     await page.reload();
-    await expect(page.getByLabel("Home city")).toHaveValue("Porto");
+    await expect(page.getByLabel("Home city", { exact: true })).toHaveValue("Porto");
 
     await page.getByRole("button", { name: "Sign out" }).first().click();
     await expect(page).toHaveURL("/");
@@ -138,6 +140,7 @@ test.describe("app shell on phones", () => {
   test("bottom tabs move between screens", async ({ page }) => {
     const email = uniqueEmail("phone");
     await signUpAndConfirm(page, { name: "Mia Example", email, password: PASSWORD });
+    await page.goto("/trips");
     const tabs = page.getByRole("navigation", { name: "Main" }).last();
     await tabs.getByRole("link", { name: "Atlas" }).click();
     await expect(page.getByRole("heading", { name: "Atlas", level: 1 })).toBeVisible();

@@ -125,15 +125,15 @@ For cloud or paid APIs: say what it may cost before using it, prefer local or fr
 
 Each stage is completed in one go, then STOP.
 
-| #   | Stage                                                     | Outcome                                                                                                                                            |
-| --- | --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | Foundation: repo, stack, design system, auth, tests, lint | Sign up/in (password + magic link) against local Supabase, profiles with RLS, app shell, landing page, full check suite and CI.                    |
-| 2   | Travel DNA + Atlas                                        | Swipe-based taste onboarding, editable preferences, Mapbox world map of visited places, public profile.                                            |
-| 3   | Drift + Compass AI layer                                  | Gemini cards grounded with Google Places, swipe deck, natural-language search on a globe, saves; schema validation, fallbacks, caching, quotas.    |
-| 4   | Trip Canvas + Compose                                     | Trips, day timeline linked to the map, drag and drop, AI-composed itineraries with real travel times, budget/pace meters, accept/reject proposals. |
-| 5   | Huddle                                                    | Invites and roles, live co-editing with presence, Group Drift, voting, Consensus planning.                                                         |
-| 6   | Field Notes                                               | Follows, reviews, ratings, photos, feed, Fork-a-trip, AI-drafted trip stories.                                                                     |
-| 7   | Polish: README, demo, local setup                         | Accessibility and performance passes, full e2e coverage, demo seed data, docs, one-command local setup. No deployment.                             |
+| #   | Stage                                                     | Outcome                                                                                                                                                                                        |
+| --- | --------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Foundation: repo, stack, design system, auth, tests, lint | Sign up/in (password + magic link) against local Supabase, profiles with RLS, app shell, landing page, full check suite and CI.                                                                |
+| 2   | Travel DNA + Atlas                                        | Swipe-based taste onboarding, editable preferences, Mapbox world map of visited places, public profile.                                                                                        |
+| 3   | Drift + Compass AI layer                                  | Gemini cards grounded in free place data (GeoNames, OpenStreetMap, Wikivoyage, Commons), swipe deck, natural-language search on a globe, saves; schema validation, fallbacks, caching, quotas. |
+| 4   | Trip Canvas + Compose                                     | Trips, day timeline linked to the map, drag and drop, AI-composed itineraries with real travel times, budget/pace meters, accept/reject proposals.                                             |
+| 5   | Huddle                                                    | Invites and roles, live co-editing with presence, Group Drift, voting, Consensus planning.                                                                                                     |
+| 6   | Field Notes                                               | Follows, reviews, ratings, photos, feed, Fork-a-trip, AI-drafted trip stories.                                                                                                                 |
+| 7   | Polish: README, demo, local setup                         | Accessibility and performance passes, full e2e coverage, demo seed data, docs, one-command local setup. No deployment.                                                                         |
 
 MVP: sign up → build Travel DNA → swipe and save in Drift → Compose a trip → view and edit it on the map. It should be working by Stage 4, so a demoable project exists early.
 

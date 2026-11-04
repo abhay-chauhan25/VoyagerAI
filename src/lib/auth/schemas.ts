@@ -40,14 +40,31 @@ export const signInSchema = z.object({
   password: z.string({ error: "Enter your password." }).min(1, "Enter your password."),
 });
 export const magicLinkSchema = z.object({ email });
-export const profileSchema = z.object({
-  displayName,
-  homeCity: z
-    .string()
-    .trim()
-    .max(80, "Keep it under 80 characters.")
-    .transform((value) => (value ? value : null)),
-});
+export const HANDLE_PATTERN = /^[a-z0-9_]{3,30}$/;
+
+export const profileSchema = z
+  .object({
+    displayName,
+    homeCity: z
+      .string()
+      .trim()
+      .max(80, "Keep it under 80 characters.")
+      .transform((value) => (value ? value : null)),
+    handle: z
+      .string()
+      .trim()
+      .toLowerCase()
+      .refine(
+        (value) => value === "" || HANDLE_PATTERN.test(value),
+        "Use 3–30 letters, numbers or underscores.",
+      )
+      .transform((value) => (value ? value : null)),
+    isPublic: z.boolean(),
+  })
+  .refine((profile) => !profile.isPublic || profile.handle !== null, {
+    message: "Choose a handle before making your profile public.",
+    path: ["handle"],
+  });
 
 export type FieldErrors = Partial<Record<string, string>>;
 

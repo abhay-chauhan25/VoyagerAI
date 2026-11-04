@@ -9,6 +9,8 @@ const publicEnvSchema = z.object({
   NEXT_PUBLIC_SUPABASE_URL: z.url(),
   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: z.string().min(20),
   NEXT_PUBLIC_SITE_URL: z.url(),
+  // Optional so the app still runs without maps; when present it must be a *public* token.
+  NEXT_PUBLIC_MAPBOX_TOKEN: z.string().regex(/^pk\./, "must be a public token (pk.…)").optional(),
 });
 
 export type PublicEnv = z.infer<typeof publicEnvSchema>;
@@ -31,6 +33,7 @@ export function publicEnv(): PublicEnv {
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
     NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
     NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
+    NEXT_PUBLIC_MAPBOX_TOKEN: process.env.NEXT_PUBLIC_MAPBOX_TOKEN || undefined,
   });
   return cached;
 }

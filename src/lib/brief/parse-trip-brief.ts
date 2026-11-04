@@ -5,6 +5,8 @@
  * Anything it cannot read stays null rather than being guessed.
  */
 
+import type { Interest } from "@/lib/interests";
+
 export type Pace = "Slow" | "Balanced" | "Full";
 export type Currency = "EUR" | "USD" | "GBP";
 
@@ -14,7 +16,7 @@ export type TripBrief = {
   when: string | null;
   pace: Pace;
   paceStated: boolean;
-  interests: string[];
+  interests: Interest[];
   budget: { amount: number; currency: Currency; per: "person" | "total" | "unspecified" } | null;
   travellers: number | null;
 };
@@ -64,7 +66,7 @@ const SEASONS: Record<string, string> = {
 };
 
 /** Canonical interest → words that signal it. Order here is only a tiebreak; output follows the text. */
-const INTERESTS: Record<string, readonly string[]> = {
+const INTEREST_WORDS: Record<Interest, readonly string[]> = {
   Food: ["food", "foodie", "eat", "eating", "restaurants", "cuisine", "street food", "tapas"],
   Viewpoints: ["view", "views", "viewpoint", "viewpoints", "miradouro", "sunset", "sunsets"],
   Museums: ["museum", "museums", "gallery", "galleries"],
@@ -187,15 +189,15 @@ function findPace(text: string): { pace: Pace; stated: boolean } {
   return { pace: "Balanced", stated: false };
 }
 
-function findInterests(text: string): string[] {
-  const found: { label: string; index: number }[] = [];
-  for (const [label, words] of Object.entries(INTERESTS)) {
+function findInterests(text: string): Interest[] {
+  const found: { label: Interest; index: number }[] = [];
+  for (const [label, words] of Object.entries(INTEREST_WORDS)) {
     let first = -1;
     for (const word of words) {
       const match = wordRegex(word).exec(text);
       if (match && (first === -1 || match.index < first)) first = match.index;
     }
-    if (first !== -1) found.push({ label, index: first });
+    if (first !== -1) found.push({ label: label as Interest, index: first });
   }
   return found.sort((a, b) => a.index - b.index).map((f) => f.label);
 }

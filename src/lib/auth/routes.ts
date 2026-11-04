@@ -1,8 +1,17 @@
 /** Route groups used by the proxy and the auth pages. Kept in one place so they cannot drift. */
 export const APP_HOME = "/trips";
 export const SIGN_IN_PATH = "/sign-in";
+export const ONBOARDING_PATH = "/welcome";
 
-const PROTECTED_PREFIXES = ["/drift", "/trips", "/atlas", "/notes", "/account"] as const;
+const PROTECTED_PREFIXES = [
+  "/drift",
+  "/trips",
+  "/atlas",
+  "/notes",
+  "/account",
+  "/dna",
+  "/welcome",
+] as const;
 const AUTH_ONLY_FOR_GUESTS = ["/sign-in", "/sign-up"] as const;
 
 function matchesPrefix(pathname: string, prefix: string): boolean {

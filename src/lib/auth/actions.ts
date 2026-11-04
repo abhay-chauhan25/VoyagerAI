@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { publicEnv } from "@/lib/env";
 import { createClient } from "@/lib/supabase/server";
 import type { FormState } from "./form-state";
-import { APP_HOME, safeNextPath } from "./routes";
+import { ONBOARDING_PATH, safeNextPath } from "./routes";
 import {
   magicLinkSchema,
   profileSchema,
@@ -44,7 +44,8 @@ export async function signUp(_prev: FormState, formData: FormData): Promise<Form
     email,
     password,
     options: {
-      emailRedirectTo: callbackUrl(APP_HOME),
+      // New travellers start with the Travel DNA deck; they can skip it from there.
+      emailRedirectTo: callbackUrl(ONBOARDING_PATH),
       data: { display_name: displayName, ...(tripIdea ? { trip_idea: tripIdea } : {}) },
     },
   });
@@ -145,11 +146,18 @@ export async function signOut(): Promise<void> {
 }
 
 export async function updateProfile(_prev: FormState, formData: FormData): Promise<FormState> {
-  const raw = readFields(formData, ["displayName", "homeCity"] as const);
-  const values = { displayName: raw.displayName ?? "", homeCity: raw.homeCity ?? "" };
+  const raw = readFields(formData, ["displayName", "homeCity", "handle", "isPublic"] as const);
+  const values = {
+    displayName: raw.displayName ?? "",
+    homeCity: raw.homeCity ?? "",
+    handle: raw.handle ?? "",
+    isPublic: raw.isPublic === "on" ? "on" : "",
+  };
   const parsed = profileSchema.safeParse({
     displayName: raw.displayName,
     homeCity: raw.homeCity ?? "",
+    handle: raw.handle ?? "",
+    isPublic: raw.isPublic === "on",
   });
   if (!parsed.success) {
     return { status: "error", fieldErrors: toFieldErrors(parsed.error), values };
@@ -162,9 +170,21 @@ export async function updateProfile(_prev: FormState, formData: FormData): Promi
 
   const { error } = await supabase
     .from("profiles")
-    .update({ display_name: parsed.data.displayName, home_city: parsed.data.homeCity })
+    .update({
+      display_name: parsed.data.displayName,
+      home_city: parsed.data.homeCity,
+      handle: parsed.data.handle,
+      is_public: parsed.data.isPublic,
+    })
     .eq("id", userId);
 
+  if (error?.code === "23505") {
+    return {
+      status: "error",
+      fieldErrors: { handle: "That handle is taken. Try another." },
+      values,
+    };
+  }
   if (error) {
     console.error("Profile update failed", { code: error.code });
     return { status: "error", message: "We couldn't save your profile. Try again.", values };

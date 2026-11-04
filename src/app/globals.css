@@ -1,0 +1,240 @@
+@import "tailwindcss";
+
+/*
+ * Voyager design tokens.
+ * Palette "Stone and blueprint": stone paper, near-black ink, one blueprint-blue accent — the colours
+ * of a chart table. Dark mode ("Night Flight") keeps the same roles on a true warm-neutral dark.
+ * Components reference roles only (bg, surface, ink, muted, accent…), never raw hex values.
+ */
+
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+:root {
+  color-scheme: light;
+
+  /* Grounds and surfaces */
+  --bg: #dfdedb; /* page paper */
+  --surface: #d3d2ce; /* a field one step darker than the page */
+  --ground: #e6e5e1; /* app canvas */
+  --panel: #f1f0ed; /* app panels, inputs */
+  --raised: #ebeae6;
+  --active: #d9d8d3; /* selected nav row */
+
+  /* Lines (app screens only) */
+  --border: #cfcdc7;
+  --rule: #dad8d3;
+  --control: #a9a79f;
+
+  /* Text */
+  --ink: #26251e;
+  --muted: #57554d;
+
+  /* Action and data */
+  --accent: #2456d6;
+  --accent-hover: #1d48b8;
+  --accent-ink: #ffffff;
+  --primary: #26251e;
+  --primary-hover: #3a392f;
+  --primary-ink: #f1f0ed;
+
+  /* Status (text-safe at 4.5:1 on --panel) */
+  --positive: #1f6b45;
+  --negative: #a8261d;
+  --negative-bg: #f6e3df;
+
+  /* Inverted field for the dark half of split sections */
+  --night: #1b1a15;
+  --night-ink: #ecebe6;
+  --night-muted: #b4b2a9;
+
+  /* Motion: strong ease-out for responses, ease-in-out for on-screen movement */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  --dur-press: 140ms;
+  --dur-quick: 180ms;
+  --dur-base: 240ms;
+
+  /* Shape: app screens use one tight radius family; the public pages are square */
+  --radius-card: 6px;
+  --radius-control: 4px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #12120f;
+    --surface: #1b1b17;
+    --ground: #12120f;
+    --panel: #1b1b17;
+    --raised: #22221d;
+    --active: #2c2b25;
+    --border: #2e2d27;
+    --rule: #24231f;
+    --control: #57564d;
+    --ink: #ecebe6;
+    --muted: #b0aea5;
+    --accent: #7d9dff;
+    --accent-hover: #9ab3ff;
+    --accent-ink: #0d1020;
+    --primary: #ecebe6;
+    --primary-hover: #ffffff;
+    --primary-ink: #12120f;
+    --positive: #5cc48a;
+    --negative: #f2786e;
+    --negative-bg: #2c1a18;
+    --night: #08080a;
+    --night-ink: #ecebe6;
+    --night-muted: #b0aea5;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #12120f;
+  --surface: #1b1b17;
+  --ground: #12120f;
+  --panel: #1b1b17;
+  --raised: #22221d;
+  --active: #2c2b25;
+  --border: #2e2d27;
+  --rule: #24231f;
+  --control: #57564d;
+  --ink: #ecebe6;
+  --muted: #b0aea5;
+  --accent: #7d9dff;
+  --accent-hover: #9ab3ff;
+  --accent-ink: #0d1020;
+  --primary: #ecebe6;
+  --primary-hover: #ffffff;
+  --primary-ink: #12120f;
+  --positive: #5cc48a;
+  --negative: #f2786e;
+  --negative-bg: #2c1a18;
+  --night: #08080a;
+  --night-ink: #ecebe6;
+  --night-muted: #b0aea5;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-ground: var(--ground);
+  --color-panel: var(--panel);
+  --color-raised: var(--raised);
+  --color-active: var(--active);
+  --color-border: var(--border);
+  --color-rule: var(--rule);
+  --color-control: var(--control);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-ink: var(--accent-ink);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-ink: var(--primary-ink);
+  --color-positive: var(--positive);
+  --color-negative: var(--negative);
+  --color-negative-bg: var(--negative-bg);
+  --color-night: var(--night);
+  --color-night-ink: var(--night-ink);
+  --color-night-muted: var(--night-muted);
+
+  --font-display: var(--font-rokkitt), "Rockwell", "Roboto Slab", serif;
+  --font-text: var(--font-literata), "Iowan Old Style", Georgia, serif;
+
+  /* App type scale: 13 / 14 / 16 / 18 / 24 */
+  --text-meta: 0.8125rem;
+  --text-meta--line-height: 1.25rem;
+  --text-ui: 0.875rem;
+  --text-ui--line-height: 1.375rem;
+  --text-body: 1rem;
+  --text-body--line-height: 1.5rem;
+  --text-lead: 1.125rem;
+  --text-lead--line-height: 1.6rem;
+  --text-title: 1.5rem;
+  --text-title--line-height: 2rem;
+
+  --text-display: clamp(2.75rem, 5vw, 4.5rem);
+  --text-display--line-height: 0.9;
+
+  --radius-card: var(--radius-card);
+  --radius-control: var(--radius-control);
+
+  --ease-out-strong: var(--ease-out);
+  --ease-in-out-strong: var(--ease-in-out);
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-text);
+    font-size: 1rem;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::selection {
+    background: var(--accent);
+    color: var(--accent-ink);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+}
+
+@layer components {
+  /* Press feedback for anything pressable: subtle scale, fast, never on keyboard focus. */
+  .pressable {
+    transition:
+      transform var(--dur-press) var(--ease-out),
+      background-color var(--dur-quick) ease,
+      color var(--dur-quick) ease;
+  }
+  .pressable:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+
+  /* Section entrances: content is visible without script; script adds .reveal-armed first. */
+  .reveal-armed [data-reveal] {
+    opacity: 0;
+    transform: translateY(20px);
+    transition:
+      opacity 520ms var(--ease-out),
+      transform 520ms var(--ease-out);
+    transition-delay: calc(var(--reveal-index, 0) * 70ms);
+  }
+  .reveal-armed [data-reveal].is-revealed {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pressable:active:not(:disabled) {
+    transform: none;
+  }
+  .reveal-armed [data-reveal] {
+    transform: none;
+    transition: opacity 200ms ease;
+  }
+}

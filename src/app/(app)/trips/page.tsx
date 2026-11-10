@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { EmptyFrame, Screen, ScreenHeader } from "@/components/app/screen";
+import { Invitations } from "@/components/huddle/invitations";
 import { TripCard } from "@/components/trips/trip-card";
+import { loadMyInvitations } from "@/lib/huddle/queries";
 import { ButtonLink } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
 import { loadComposableCities, loadTrips } from "@/lib/trips/queries";
@@ -11,9 +13,10 @@ export const metadata: Metadata = { title: "Trips" };
 export default async function TripsPage() {
   const user = await requireUser("/trips");
   const supabase = await createClient();
-  const [trips, cities] = await Promise.all([
+  const [trips, cities, invitations] = await Promise.all([
     loadTrips(supabase, user.id),
     loadComposableCities(supabase, user.id),
+    loadMyInvitations(supabase),
   ]);
   const canCompose = cities.length > 0;
 
@@ -24,6 +27,8 @@ export default async function TripsPage() {
         subline="Day-by-day plans composed from the places you saved in Drift."
         action={canCompose ? <ButtonLink href="/trips/new">Compose a trip</ButtonLink> : undefined}
       />
+
+      {invitations.length > 0 ? <Invitations invitations={invitations} /> : null}
 
       {trips.length > 0 ? (
         <section aria-labelledby="trips-heading" className="flex flex-col gap-3">

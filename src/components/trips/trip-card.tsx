@@ -54,6 +54,14 @@ export function TripCard({ trip }: { trip: TripSummary }) {
             {trip.cityName} · {tripDates(trip.startDate, trip.dayCount)} · {trip.stopCount}{" "}
             {trip.stopCount === 1 ? "stop" : "stops"}
           </p>
+          {trip.memberCount > 1 ? (
+            <p className="text-meta text-muted">
+              Shared with {trip.memberCount - 1} {trip.memberCount === 2 ? "person" : "people"}
+              {trip.role !== "owner"
+                ? ` · you're ${trip.role === "editor" ? "an editor" : "a viewer"}`
+                : ""}
+            </p>
+          ) : null}
         </div>
         <div className="flex gap-1" aria-label={`${trip.dayCount} days`}>
           {Array.from({ length: trip.dayCount }, (_, i) => (

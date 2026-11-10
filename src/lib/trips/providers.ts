@@ -3,10 +3,13 @@ import { generateJson, type AiResult } from "@/lib/ai/gemini";
 import { serverEnv } from "@/lib/server-env";
 import type { Plan } from "./plan";
 import {
+  consensusSummaryPrompt,
+  consensusSummarySchema,
   dayTitlesPrompt,
   dayTitlesSchema,
   proposalAnswerSchema,
   proposalPrompt,
+  type ConsensusSummary,
   type DayTitles,
   type ProposalAnswer,
 } from "./prompts";
@@ -22,6 +25,7 @@ export type TripProviders = {
   ): Promise<AiResult<DayTitles>>;
   proposeChanges(profile: string, plan: Plan, request: string): Promise<AiResult<ProposalAnswer>>;
   route(points: readonly Point[], mode: TravelMode): Promise<Pick<Route, "legs" | "line"> | null>;
+  consensusSummary(facts: readonly string[]): Promise<AiResult<ConsensusSummary>>;
 };
 
 const realProviders: TripProviders = {
@@ -29,6 +33,7 @@ const realProviders: TripProviders = {
   proposeChanges: (profile, plan, request) =>
     generateJson(proposalAnswerSchema, proposalPrompt(profile, plan, request)),
   route: (points, mode) => mapboxRoute(points, mode, serverEnv().MAPBOX_SERVER_TOKEN),
+  consensusSummary: (facts) => generateJson(consensusSummarySchema, consensusSummaryPrompt(facts)),
 };
 
 /**
@@ -73,6 +78,13 @@ const fixtureProviders: TripProviders = {
     return {
       legs: estimateLegs(points, mode),
       line: points.map((p) => [p.longitude, p.latitude] as [number, number]),
+    };
+  },
+  async consensusSummary(facts) {
+    return {
+      ok: true,
+      model: "fixture",
+      data: { summary: `Balances everyone: ${facts[0] ?? "a shared plan."}`.slice(0, 300) },
     };
   },
 };

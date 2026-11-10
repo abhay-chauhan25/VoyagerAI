@@ -12,8 +12,11 @@ import {
 } from "@dnd-kit/core";
 import { arrayMove, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import Link from "next/link";
-import { useCallback, useId, useMemo, useState, useTransition } from "react";
+import { useCallback, useEffect, useId, useMemo, useState, useTransition } from "react";
 import { PhotoCredit } from "@/components/drift/drift-card";
+import { useLive } from "@/components/huddle/trip-live";
+import { proposeConsensus } from "@/lib/huddle/actions";
+import type { VoteTally } from "@/lib/huddle/queries";
 import { dayHue, hueStyle } from "@/lib/hues";
 import {
   addStop,
@@ -44,13 +47,32 @@ function dayOfStop(columns: Columns, id: string): number {
   return columns.findIndex((c) => c.includes(id));
 }
 
-type Props = { view: TripView; mapToken: string | undefined; callsLeft: number };
+type Props = {
+  view: TripView;
+  mapToken: string | undefined;
+  callsLeft: number;
+  /** The Travellers panel (members, presence, invites), shown under the header. */
+  travellers: React.ReactNode;
+  memberCount: number;
+  votes: Record<string, VoteTally>;
+  myName: string;
+};
 
 /**
  * The Trip Canvas: a day-by-day timeline beside the map. Drags show at once and are saved in the
  * background; if saving fails the timeline goes back to the saved order and says so.
  */
-export function TripCanvas({ view, mapToken, callsLeft }: Props) {
+export function TripCanvas({
+  view,
+  mapToken,
+  callsLeft,
+  travellers,
+  memberCount,
+  votes,
+  myName,
+}: Props) {
+  const canEdit = view.role !== "viewer";
+  const live = useLive();
   const serverColumns = useMemo(() => columnsOf(view), [view]);
   const [columns, setColumns] = useState(serverColumns);
   const [seen, setSeen] = useState(signature(serverColumns));
@@ -90,6 +112,7 @@ export function TripCanvas({ view, mapToken, callsLeft }: Props) {
       () =>
         arrangeTrip({
           tripId: view.id,
+          revision: view.planRevision,
           layout: next.flatMap((ids, day) => ids.map((id, position) => ({ id, day, position }))),
         }),
       () => setColumns(before),
@@ -130,6 +153,7 @@ export function TripCanvas({ view, mapToken, callsLeft }: Props) {
   const onDragEnd = ({ active, over }: DragEndEvent) => {
     const before = dragStart ?? serverColumns;
     setDragStart(null);
+    live.setPaused(false);
     let next = columns;
     const day = dayOfStop(next, String(active.id));
     if (over && day >= 0 && dayOfStop(next, String(over.id)) === day) {
@@ -237,16 +261,62 @@ export function TripCanvas({ view, mapToken, callsLeft }: Props) {
 
   const credited = view.days.flatMap((d) => d.stops).filter((s) => s.photo);
 
+  // Others see which day this traveller is looking at: the day they picked, or the stop they point at.
+  const { setDay } = live;
+  useEffect(() => {
+    const pointed = hotStop ? dayOfStop(columns, hotStop) : -1;
+    setDay(pointed >= 0 ? pointed : selectedDay);
+  }, [setDay, hotStop, selectedDay, columns]);
+  const lookers = (day: number) =>
+    live.here.filter((p) => p.day === day && p.name !== myName).map((p) => p.name);
+
+  const consensus = () => run(() => proposeConsensus({ tripId: view.id }));
+
   return (
     <div className="flex flex-col gap-6 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:gap-8">
       <div className="flex min-w-0 flex-col gap-8 lg:order-1">
         <TripHeader view={view} onResult={report} />
+
+        {travellers}
+
+        <section aria-labelledby="together-heading" className="flex flex-col gap-3">
+          <h2 id="together-heading" className="text-body font-semibold">
+            Plan together
+          </h2>
+          <div className="flex flex-wrap items-center gap-3">
+            <Link
+              href={`/trips/${view.id}/drift`}
+              className="pressable inline-flex min-h-10 items-center rounded-control border border-control bg-panel px-4 text-ui font-semibold hover:bg-raised"
+            >
+              Group Drift
+            </Link>
+            {canEdit ? (
+              <button
+                type="button"
+                disabled={pending || memberCount < 2}
+                onClick={consensus}
+                className="pressable min-h-10 rounded-control border border-control bg-panel px-4 text-ui font-semibold hover:bg-raised disabled:opacity-60"
+              >
+                {pending ? "Working…" : "Propose a Consensus plan"}
+              </button>
+            ) : null}
+          </div>
+          <p className="text-meta text-muted">
+            {memberCount < 2
+              ? "Invite someone to swipe places together and balance a plan for everyone."
+              : "Swipe the same places together; matches can be added to the trip. Consensus balances everyone's top interests and pace, as a proposal you can vote on."}
+          </p>
+        </section>
 
         <ChangeRequests
           tripId={view.id}
           proposals={view.proposals}
           callsLeft={callsLeft}
           onResult={report}
+          canEdit={canEdit}
+          shared={memberCount > 1}
+          votes={votes}
+          myName={myName}
         />
 
         <div aria-live="polite" className="min-h-0">
@@ -307,12 +377,17 @@ export function TripCanvas({ view, mapToken, callsLeft }: Props) {
           }}
           sensors={sensors}
           collisionDetection={closestCorners}
-          onDragStart={() => setDragStart(columns)}
+          onDragStart={() => {
+            setDragStart(columns);
+            // Hold others' updates until the drop, so the list doesn't change under the pointer.
+            live.setPaused(true);
+          }}
           onDragOver={onDragOver}
           onDragEnd={onDragEnd}
           onDragCancel={() => {
             if (dragStart) setColumns(dragStart);
             setDragStart(null);
+            live.setPaused(false);
           }}
         >
           <div className="flex flex-col gap-10">
@@ -328,6 +403,8 @@ export function TripCanvas({ view, mapToken, callsLeft }: Props) {
                 currency={view.currency}
                 pace={PACE_LABELS[view.pace].toLowerCase()}
                 budget={BUDGET_LABELS[view.budget].toLowerCase()}
+                canEdit={canEdit}
+                lookers={lookers(day.index)}
                 hotStop={hotStop}
                 stale={stale}
                 busy={pending}
@@ -343,7 +420,7 @@ export function TripCanvas({ view, mapToken, callsLeft }: Props) {
           </div>
         </DndContext>
 
-        <Spares view={view} busy={pending} onAdd={add} />
+        {canEdit ? <Spares view={view} busy={pending} onAdd={add} /> : null}
 
         {credited.length > 0 ? (
           <section aria-labelledby="credits-heading" className="flex flex-col gap-2">

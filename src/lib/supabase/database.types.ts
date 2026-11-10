@@ -97,6 +97,52 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"group_decks": {
+                  Row: {
+                    "built_on": string,"cards": NonNullable<Json>,"created_at": string,"trip_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "built_on"?: string,"cards": NonNullable<Json>,"created_at"?: string,"trip_id": string
+                  }
+                  Update: {
+                    "built_on"?: string,"cards"?: NonNullable<Json>,"created_at"?: string,"trip_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "group_decks_trip_id_fkey"
+      columns: ["trip_id"]
+isOneToOne: true
+      referencedRelation: "trips"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"group_swipes": {
+                  Row: {
+                    "card": NonNullable<Json>,"created_at": string,"source_key": string,"trip_id": string,"user_id": string,"verdict": Database["public"]['Enums']["dna_reaction"]
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "card": NonNullable<Json>,"created_at"?: string,"source_key": string,"trip_id": string,"user_id"?: string,"verdict": Database["public"]['Enums']["dna_reaction"]
+                  }
+                  Update: {
+                    "card"?: NonNullable<Json>,"created_at"?: string,"source_key"?: string,"trip_id"?: string,"user_id"?: string,"verdict"?: Database["public"]['Enums']["dna_reaction"]
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "group_swipes_trip_id_fkey"
+      columns: ["trip_id"]
+isOneToOne: false
+      referencedRelation: "trips"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "group_swipes_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"profiles": {
                   Row: {
                     "created_at": string,"display_name": string,"handle": string | null,"home_city": string | null,"id": string,"is_public": boolean,"updated_at": string
@@ -113,14 +159,14 @@ isOneToOne: false
                   ]
                 },"proposals": {
                   Row: {
-                    "changes": NonNullable<Json>,"created_at": string,"decided_at": string | null,"id": string,"request": string,"source": string,"status": Database["public"]['Enums']["proposal_status"],"summary": string,"trip_id": string,"user_id": string
+                    "changes": NonNullable<Json>,"created_at": string,"decided_at": string | null,"details": NonNullable<Json>,"id": string,"request": string,"source": string,"status": Database["public"]['Enums']["proposal_status"],"summary": string,"trip_id": string,"user_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "changes": NonNullable<Json>,"created_at"?: string,"decided_at"?: string | null,"id"?: string,"request": string,"source": string,"status"?: Database["public"]['Enums']["proposal_status"],"summary": string,"trip_id": string,"user_id"?: string
+                    "changes": NonNullable<Json>,"created_at"?: string,"decided_at"?: string | null,"details"?: NonNullable<Json>,"id"?: string,"request": string,"source": string,"status"?: Database["public"]['Enums']["proposal_status"],"summary": string,"trip_id": string,"user_id"?: string
                   }
                   Update: {
-                    "changes"?: NonNullable<Json>,"created_at"?: string,"decided_at"?: string | null,"id"?: string,"request"?: string,"source"?: string,"status"?: Database["public"]['Enums']["proposal_status"],"summary"?: string,"trip_id"?: string,"user_id"?: string
+                    "changes"?: NonNullable<Json>,"created_at"?: string,"decided_at"?: string | null,"details"?: NonNullable<Json>,"id"?: string,"request"?: string,"source"?: string,"status"?: Database["public"]['Enums']["proposal_status"],"summary"?: string,"trip_id"?: string,"user_id"?: string
                   }
                   Relationships: [
                     {
@@ -209,6 +255,90 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"trip_invites": {
+                  Row: {
+                    "created_at": string,"created_by": string,"expires_at": string,"id": string,"revoked_at": string | null,"role": Database["public"]['Enums']["trip_role"],"token_hash": string,"trip_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"created_by"?: string,"expires_at"?: string,"id"?: string,"revoked_at"?: string | null,"role": Database["public"]['Enums']["trip_role"],"token_hash": string,"trip_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"created_by"?: string,"expires_at"?: string,"id"?: string,"revoked_at"?: string | null,"role"?: Database["public"]['Enums']["trip_role"],"token_hash"?: string,"trip_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "trip_invites_created_by_fkey"
+      columns: ["created_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "trip_invites_trip_id_fkey"
+      columns: ["trip_id"]
+isOneToOne: false
+      referencedRelation: "trips"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"trip_members": {
+                  Row: {
+                    "joined_at": string,"role": Database["public"]['Enums']["trip_role"],"trip_id": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "joined_at"?: string,"role": Database["public"]['Enums']["trip_role"],"trip_id": string,"user_id": string
+                  }
+                  Update: {
+                    "joined_at"?: string,"role"?: Database["public"]['Enums']["trip_role"],"trip_id"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "trip_members_trip_id_fkey"
+      columns: ["trip_id"]
+isOneToOne: false
+      referencedRelation: "trips"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "trip_members_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"trip_person_invites": {
+                  Row: {
+                    "created_at": string,"id": string,"invited_by": string,"invitee": string,"role": Database["public"]['Enums']["trip_role"],"status": string,"trip_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"id"?: string,"invited_by": string,"invitee": string,"role": Database["public"]['Enums']["trip_role"],"status"?: string,"trip_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"id"?: string,"invited_by"?: string,"invitee"?: string,"role"?: Database["public"]['Enums']["trip_role"],"status"?: string,"trip_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "trip_person_invites_invited_by_fkey"
+      columns: ["invited_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "trip_person_invites_invitee_fkey"
+      columns: ["invitee"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "trip_person_invites_trip_id_fkey"
+      columns: ["trip_id"]
+isOneToOne: false
+      referencedRelation: "trips"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"trip_stops": {
                   Row: {
                     "cost_amount": number | null,"created_at": string,"day_index": number,"dwell_minutes": number,"id": string,"place": NonNullable<Json>,"position": number,"price_level": number,"source_key": string,"trip_id": string,"user_id": string
@@ -241,16 +371,42 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
-                },"trips": {
+                },"trip_votes": {
                   Row: {
-                    "budget": Database["public"]['Enums']["budget_band"],"city_id": number,"created_at": string,"currency": string,"day_count": number,"id": string,"pace": Database["public"]['Enums']["travel_pace"],"start_date": string,"title": string,"updated_at": string,"user_id": string
+                    "created_at": string,"subject": string,"trip_id": string,"user_id": string,"value": number
                   }
                   ComputedFields: never
                   Insert: {
-                    "budget": Database["public"]['Enums']["budget_band"],"city_id": number,"created_at"?: string,"currency": string,"day_count": number,"id"?: string,"pace": Database["public"]['Enums']["travel_pace"],"start_date": string,"title": string,"updated_at"?: string,"user_id"?: string
+                    "created_at"?: string,"subject": string,"trip_id": string,"user_id"?: string,"value": number
                   }
                   Update: {
-                    "budget"?: Database["public"]['Enums']["budget_band"],"city_id"?: number,"created_at"?: string,"currency"?: string,"day_count"?: number,"id"?: string,"pace"?: Database["public"]['Enums']["travel_pace"],"start_date"?: string,"title"?: string,"updated_at"?: string,"user_id"?: string
+                    "created_at"?: string,"subject"?: string,"trip_id"?: string,"user_id"?: string,"value"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "trip_votes_trip_id_fkey"
+      columns: ["trip_id"]
+isOneToOne: false
+      referencedRelation: "trips"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "trip_votes_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"trips": {
+                  Row: {
+                    "budget": Database["public"]['Enums']["budget_band"],"city_id": number,"created_at": string,"currency": string,"day_count": number,"id": string,"pace": Database["public"]['Enums']["travel_pace"],"plan_revision": number,"start_date": string,"title": string,"updated_at": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "budget": Database["public"]['Enums']["budget_band"],"city_id": number,"created_at"?: string,"currency": string,"day_count": number,"id"?: string,"pace": Database["public"]['Enums']["travel_pace"],"plan_revision"?: number,"start_date": string,"title": string,"updated_at"?: string,"user_id"?: string
+                  }
+                  Update: {
+                    "budget"?: Database["public"]['Enums']["budget_band"],"city_id"?: number,"created_at"?: string,"currency"?: string,"day_count"?: number,"id"?: string,"pace"?: Database["public"]['Enums']["travel_pace"],"plan_revision"?: number,"start_date"?: string,"title"?: string,"updated_at"?: string,"user_id"?: string
                   }
                   Relationships: [
                     {
@@ -299,8 +455,14 @@ isOneToOne: false
             [_ in never]: never
           }
           Functions: {
-            "arrange_trip":
-{ Args: { "p_add"?: Json,"p_layout": Json,"p_remove"?: (string)[],"p_trip": string }; Returns: undefined
+            "accept_trip_invite":
+{ Args: { "p_token": string }; Returns: string
+                           },
+"arrange_trip":
+{ Args: { "p_add"?: Json,"p_layout": Json,"p_remove"?: (string)[],"p_revision": number,"p_trip": string }; Returns: number
+                           },
+"can_edit_trip":
+{ Args: { "p_trip": string }; Returns: boolean
                            },
 "consume_ai_quota":
 { Args: { "daily_limit": number }; Returns: boolean
@@ -308,11 +470,33 @@ isOneToOne: false
 "create_trip":
 { Args: { "p_days": Json,"p_stops": Json,"p_trip": Json }; Returns: string
                            },
-"owns_trip":
+"invite_by_handle":
+{ Args: { "p_handle": string,"p_role": Database["public"]['Enums']["trip_role"],"p_trip": string }; Returns: undefined
+                           },
+"invite_hash":
+{ Args: { "p_token": string }; Returns: string
+                           },
+"invite_preview":
+{ Args: { "p_token": string }; Returns: {
+              "already_member": boolean,"city_name": string,"day_count": number,"inviter": string,"role": Database["public"]['Enums']["trip_role"],"start_date": string,"title": string,"trip_id": string,"usable": boolean
+            }[]
+                           },
+"is_trip_member":
 { Args: { "p_trip": string }; Returns: boolean
+                           },
+"is_trip_owner":
+{ Args: { "p_trip": string }; Returns: boolean
+                           },
+"my_trip_invitations":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "city_name": string,"day_count": number,"id": string,"inviter": string,"role": Database["public"]['Enums']["trip_role"],"start_date": string,"title": string,"trip_id": string
+            }[]
                            },
 "profile_is_public":
 { Args: { "profile_id": string }; Returns: boolean
+                           },
+"respond_to_trip_invitation":
+{ Args: { "p_accept": boolean,"p_invite": string }; Returns: string
                            },
 "search_cities":
 { Args: { "max_results"?: number,"query": string }; Returns: {
@@ -331,10 +515,21 @@ isOneToOne: false
         to: "cities"
         isOneToOne: false
         isSetofReturn: true
-      } }
+      } },
+"trip_member_profiles":
+{ Args: { "p_trip": string }; Returns: {
+              "display_name": string,"pace": Database["public"]['Enums']["travel_pace"],"role": Database["public"]['Enums']["trip_role"],"top_interests": (string)[],"user_id": string
+            }[]
+                           },
+"trip_role_of":
+{ Args: { "p_trip": string }; Returns: Database["public"]['Enums']["trip_role"]
+                           },
+"trip_topic_member":
+{ Args: { "p_topic": string }; Returns: boolean
+                           }
           }
           Enums: {
-            "budget_band": "shoestring"|"comfortable"|"splurge","dna_reaction": "pass"|"love"|"more","proposal_status": "pending"|"applied"|"dismissed","save_kind": "destination"|"activity","travel_mode": "walking"|"driving","travel_pace": "slow"|"balanced"|"full"
+            "budget_band": "shoestring"|"comfortable"|"splurge","dna_reaction": "pass"|"love"|"more","proposal_status": "pending"|"applied"|"dismissed","save_kind": "destination"|"activity","travel_mode": "walking"|"driving","travel_pace": "slow"|"balanced"|"full","trip_role": "owner"|"editor"|"viewer"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -454,7 +649,7 @@ export const Constants = {
           }
         },"public": {
           Enums: {
-            "budget_band": ["shoestring", "comfortable", "splurge"],"dna_reaction": ["pass", "love", "more"],"proposal_status": ["pending", "applied", "dismissed"],"save_kind": ["destination", "activity"],"travel_mode": ["walking", "driving"],"travel_pace": ["slow", "balanced", "full"]
+            "budget_band": ["shoestring", "comfortable", "splurge"],"dna_reaction": ["pass", "love", "more"],"proposal_status": ["pending", "applied", "dismissed"],"save_kind": ["destination", "activity"],"travel_mode": ["walking", "driving"],"travel_pace": ["slow", "balanced", "full"],"trip_role": ["owner", "editor", "viewer"]
           }
         }
 } as const

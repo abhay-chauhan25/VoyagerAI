@@ -21,7 +21,7 @@ export const ACTIVITY_DECK_SIZE = 12;
  * notable places when the volunteer-run Overpass servers are down. Says whether any source answered,
  * so "unreachable" and "nothing found" are reported differently.
  */
-async function findPlaces(p: Providers, city: City) {
+export async function findPlaces(p: Providers, city: City) {
   let reached = false;
   for (const [label, lookup] of [
     ["OpenStreetMap", () => p.activities(city.latitude, city.longitude)],

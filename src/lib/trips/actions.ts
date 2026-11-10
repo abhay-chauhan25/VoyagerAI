@@ -13,12 +13,14 @@ import { createClient } from "@/lib/supabase/server";
 import { applyChanges } from "./plan";
 import { resolveProposal } from "./prompts";
 import { tripProviders } from "./providers";
+import { loadPool } from "@/lib/huddle/queries";
 import { loadCitySaves, loadTrip, toPlan, type StoredTrip } from "./queries";
 import { ruleProposal } from "./rules";
 import {
   changeRequestSchema,
   composeSchema,
   layoutSchema,
+  MAX_CHANGES,
   MAX_STOPS_PER_DAY,
   TRAVEL_MODES,
   type Layout,
@@ -30,6 +32,14 @@ export type TripActionResult = { ok: true; message?: string } | { ok: false; mes
 
 const FAILED: TripActionResult = { ok: false, message: "That didn't save. Try again." };
 const NOT_FOUND: TripActionResult = { ok: false, message: "That trip no longer exists." };
+const READ_ONLY: TripActionResult = {
+  ok: false,
+  message: "You can view this trip, swipe and vote, but only editors change the plan.",
+};
+const CONFLICT: TripActionResult = {
+  ok: false,
+  message: "Someone changed this trip just now, so nothing was saved. The latest version is shown.",
+};
 
 async function requireSignedIn(next: string) {
   const supabase = await createClient();
@@ -49,6 +59,18 @@ async function withTrip(tripId: unknown) {
   return trip ? { ...session, trip } : null;
 }
 
+type TripContext = NonNullable<Awaited<ReturnType<typeof withTrip>>>;
+
+/** The trip, if the caller may change its plan; otherwise the result to return instead. */
+async function withEditableTrip(
+  tripId: unknown,
+): Promise<{ ctx: TripContext } | { error: TripActionResult }> {
+  const ctx = await withTrip(tripId);
+  if (!ctx) return { error: NOT_FOUND };
+  if (ctx.trip.role === "viewer") return { error: READ_ONLY };
+  return { ctx };
+}
+
 const weightsOf = (dna: TravelDna | null) => dna?.weights ?? {};
 
 /** Writes a new arrangement in one transaction, then refreshes travel times for days that changed. */
@@ -58,9 +80,11 @@ async function writeArrangement(
   layout: Layout,
   remove: string[] = [],
   add: { id: string; day: number; position: number; place: Placed["place"] }[] = [],
+  revision: number = trip.planRevision,
 ): Promise<TripActionResult> {
   const { error } = await supabase.rpc("arrange_trip", {
     p_trip: trip.id,
+    p_revision: revision,
     p_layout: layout.map((l) => ({ id: l.id, day_index: l.day, position: l.position })),
     p_remove: remove,
     p_add: add.map((a) => ({
@@ -74,10 +98,13 @@ async function writeArrangement(
     })),
   });
   if (error) {
+    if (error.code === "40001" || error.code === "22023") {
+      // Someone else changed the plan first: show them the latest instead of overwriting it.
+      revalidatePath(`/trips/${trip.id}`);
+      return CONFLICT;
+    }
     console.error("Arranging a trip failed", { code: error.code });
-    return error.code === "22023"
-      ? { ok: false, message: "The trip changed in another tab. Reload to see the latest." }
-      : FAILED;
+    return FAILED;
   }
   const fresh = await loadTrip(supabase, userId, trip.id);
   if (fresh) {
@@ -176,19 +203,25 @@ export async function composeTripAction(_prev: FormState, formData: FormData): P
 
 /* ---------- Canvas edits ---------- */
 
-const arrangeInput = z.object({ tripId: z.uuid(), layout: layoutSchema });
+const arrangeInput = z.object({
+  tripId: z.uuid(),
+  layout: layoutSchema,
+  /** The plan revision the traveller was looking at when they dragged. */
+  revision: z.number().int().min(0),
+});
 
 /** Saves a drag-and-drop (or keyboard) rearrangement, keeping the traveller's order exactly. */
 export async function arrangeTrip(input: unknown): Promise<TripActionResult> {
   const parsed = arrangeInput.safeParse(input);
   if (!parsed.success) return { ok: false, message: "That move isn't possible." };
-  const ctx = await withTrip(parsed.data.tripId);
-  if (!ctx) return NOT_FOUND;
+  const found = await withEditableTrip(parsed.data.tripId);
+  if ("error" in found) return found.error;
+  const { ctx } = found;
   const layout = normalise(parsed.data.layout);
   if (!fits(layout, ctx.trip.dayCount)) {
     return { ok: false, message: `A day holds at most ${MAX_STOPS_PER_DAY} stops.` };
   }
-  return writeArrangement(ctx, ctx.trip, layout);
+  return writeArrangement(ctx, ctx.trip, layout, [], [], parsed.data.revision);
 }
 
 const dayInput = z.object({ tripId: z.uuid(), day: z.number().int().min(0).max(13) });
@@ -197,8 +230,9 @@ const dayInput = z.object({ tripId: z.uuid(), day: z.number().int().min(0).max(1
 export async function optimiseDay(input: unknown): Promise<TripActionResult> {
   const parsed = dayInput.safeParse(input);
   if (!parsed.success) return FAILED;
-  const ctx = await withTrip(parsed.data.tripId);
-  if (!ctx) return NOT_FOUND;
+  const found = await withEditableTrip(parsed.data.tripId);
+  if ("error" in found) return found.error;
+  const { ctx } = found;
   const dna = await loadTravelDna(ctx.supabase, ctx.userId);
   const layout = arrangeStops(
     ctx.trip.stops,
@@ -214,8 +248,9 @@ const modeInput = dayInput.extend({ mode: z.enum(TRAVEL_MODES) });
 export async function setDayMode(input: unknown): Promise<TripActionResult> {
   const parsed = modeInput.safeParse(input);
   if (!parsed.success) return FAILED;
-  const ctx = await withTrip(parsed.data.tripId);
-  if (!ctx) return NOT_FOUND;
+  const found = await withEditableTrip(parsed.data.tripId);
+  if ("error" in found) return found.error;
+  const { ctx } = found;
   const { error } = await ctx.supabase
     .from("trip_days")
     .update({ mode: parsed.data.mode })
@@ -247,8 +282,9 @@ const stopInput = z.object({
 export async function updateStop(input: unknown): Promise<TripActionResult> {
   const parsed = stopInput.safeParse(input);
   if (!parsed.success) return { ok: false, message: "Enter an amount of 0 or more." };
-  const ctx = await withTrip(parsed.data.tripId);
-  if (!ctx) return NOT_FOUND;
+  const found = await withEditableTrip(parsed.data.tripId);
+  if ("error" in found) return found.error;
+  const { ctx } = found;
   const { priceLevel, costAmount, dwell } = parsed.data;
   const { error } = await ctx.supabase
     .from("trip_stops")
@@ -272,8 +308,9 @@ const removeInput = z.object({ tripId: z.uuid(), stopId: z.uuid() });
 export async function removeStop(input: unknown): Promise<TripActionResult> {
   const parsed = removeInput.safeParse(input);
   if (!parsed.success) return FAILED;
-  const ctx = await withTrip(parsed.data.tripId);
-  if (!ctx) return NOT_FOUND;
+  const found = await withEditableTrip(parsed.data.tripId);
+  if ("error" in found) return found.error;
+  const { ctx } = found;
   const layout = normalise(
     ctx.trip.stops
       .filter((s) => s.id !== parsed.data.stopId)
@@ -292,14 +329,15 @@ const addInput = z.object({
 export async function addStop(input: unknown): Promise<TripActionResult> {
   const parsed = addInput.safeParse(input);
   if (!parsed.success) return FAILED;
-  const ctx = await withTrip(parsed.data.tripId);
-  if (!ctx) return NOT_FOUND;
+  const found = await withEditableTrip(parsed.data.tripId);
+  if ("error" in found) return found.error;
+  const { ctx } = found;
   const { trip } = ctx;
   if (parsed.data.day >= trip.dayCount) return FAILED;
-  const saves = await loadCitySaves(ctx.supabase, ctx.userId, trip.cityId);
+  const saves = await loadPool(ctx.supabase, ctx.userId, trip);
   const place = saves.find((s) => s.sourceKey === parsed.data.sourceKey);
   if (!place || trip.stops.some((s) => s.sourceKey === place.sourceKey)) {
-    return { ok: false, message: "That place is already in the trip or no longer saved." };
+    return { ok: false, message: "That place is already in the trip, or nobody has saved it." };
   }
   const onDay = trip.stops.filter((s) => s.day === parsed.data.day).length;
   if (onDay >= MAX_STOPS_PER_DAY) {
@@ -334,12 +372,13 @@ export async function askForChanges(input: unknown): Promise<TripActionResult> {
       message: parsed.error.issues[0]?.message ?? "Say what you'd like to change.",
     };
   }
-  const ctx = await withTrip(parsed.data.tripId);
-  if (!ctx) return NOT_FOUND;
+  const found = await withEditableTrip(parsed.data.tripId);
+  if ("error" in found) return found.error;
+  const { ctx } = found;
   const { supabase, userId, trip } = ctx;
   const [dna, saves] = await Promise.all([
     loadTravelDna(supabase, userId),
-    loadCitySaves(supabase, userId, trip.cityId),
+    loadPool(supabase, userId, trip),
   ]);
   const plan = toPlan(trip, saves, weightsOf(dna));
 
@@ -377,15 +416,24 @@ export async function askForChanges(input: unknown): Promise<TripActionResult> {
 const decideInput = z.object({
   tripId: z.uuid(),
   proposalId: z.uuid(),
-  accept: z.array(z.number().int().min(0).max(9)).max(10),
+  accept: z
+    .array(
+      z
+        .number()
+        .int()
+        .min(0)
+        .max(MAX_CHANGES - 1),
+    )
+    .max(MAX_CHANGES),
 });
 
 /** Applies the accepted changes of a proposal (none = dismiss it), then re-orders touched days. */
 export async function decideProposal(input: unknown): Promise<TripActionResult> {
   const parsed = decideInput.safeParse(input);
   if (!parsed.success) return FAILED;
-  const ctx = await withTrip(parsed.data.tripId);
-  if (!ctx) return NOT_FOUND;
+  const found = await withEditableTrip(parsed.data.tripId);
+  if ("error" in found) return found.error;
+  const { ctx } = found;
   const { supabase, userId, trip } = ctx;
   const proposal = trip.proposals.find((p) => p.id === parsed.data.proposalId);
   if (!proposal) return { ok: false, message: "That proposal was already decided." };
@@ -398,7 +446,7 @@ export async function decideProposal(input: unknown): Promise<TripActionResult> 
   if (accepted.length > 0) {
     const [dna, saves] = await Promise.all([
       loadTravelDna(supabase, userId),
-      loadCitySaves(supabase, userId, trip.cityId),
+      loadPool(supabase, userId, trip),
     ]);
     const weights = weightsOf(dna);
     const applied = applyChanges(toPlan(trip, saves, weights), accepted);
@@ -459,8 +507,9 @@ export async function renameTrip(input: unknown): Promise<TripActionResult> {
   const parsed = renameInput.safeParse(input);
   if (!parsed.success)
     return { ok: false, message: parsed.error.issues[0]?.message ?? "Invalid name." };
-  const ctx = await withTrip(parsed.data.tripId);
-  if (!ctx) return NOT_FOUND;
+  const found = await withEditableTrip(parsed.data.tripId);
+  if ("error" in found) return found.error;
+  const { ctx } = found;
   const { error } = await ctx.supabase
     .from("trips")
     .update({ title: parsed.data.title })
@@ -478,8 +527,10 @@ export async function deleteTrip(formData: FormData): Promise<void> {
   const id = z.uuid().safeParse(formData.get("tripId"));
   if (!id.success) throw new Error("Invalid trip id");
   const { supabase } = await requireSignedIn("/trips");
-  const { error } = await supabase.from("trips").delete().eq("id", id.data);
+  const { data, error } = await supabase.from("trips").delete().eq("id", id.data).select("id");
   if (error) throw new Error(`Could not delete trip (${error.code})`);
+  // Only the owner may delete; for anyone else the policies match no row.
+  if (data.length === 0) throw new Error("Only the trip's owner can delete it");
   revalidatePath("/trips");
   redirect("/trips");
 }

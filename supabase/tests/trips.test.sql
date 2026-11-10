@@ -45,11 +45,13 @@ select throws_ok($$ update public.trip_stops set price_level = 9 $$, '23514', nu
 select lives_ok(format($$ select public.arrange_trip(%L,
   (select jsonb_agg(jsonb_build_object('id', id, 'day_index', 0, 'position', case source_key when 'osm:node/1' then 0 else 1 end))
      from public.trip_stops where source_key in ('osm:node/1', 'osm:way/3')),
+  (select plan_revision from public.trips),
   array[(select id from public.trip_stops where source_key = 'osm:node/2')]) $$, (select trip_id from ids)),
   'owner can rearrange a trip');
 select is((select string_agg(source_key, ',' order by day_index, position) from public.trip_stops), 'osm:node/1,osm:way/3', 'stops land where the layout says');
 select throws_ok(format($$ select public.arrange_trip(%L,
-  (select jsonb_agg(jsonb_build_object('id', id, 'day_index', 0, 'position', 0)) from public.trip_stops where source_key = 'osm:node/1')) $$, (select trip_id from ids)),
+  (select jsonb_agg(jsonb_build_object('id', id, 'day_index', 0, 'position', 0)) from public.trip_stops where source_key = 'osm:node/1'),
+  (select plan_revision from public.trips)) $$, (select trip_id from ids)),
   '22023', null, 'a layout that leaves out a stop is refused');
 select is((select count(*)::int from public.trip_stops), 2, 'a refused layout loses no stops');
 
@@ -64,7 +66,7 @@ select set_config('request.jwt.claims', '{"sub": "22222222-2222-4222-8222-222222
 select is((select count(*)::int from public.trips) + (select count(*)::int from public.trip_stops) + (select count(*)::int from public.proposals), 0, 'trips, stops and proposals are private');
 select throws_ok(format($$ insert into public.trip_stops (trip_id, day_index, position, source_key, place, dwell_minutes, price_level) values (%L, 0, 5, 'osm:node/50', '{}', 60, 1) $$, (select trip_id from ids)),
   '42501', null, 'nobody can add stops to someone else''s trip');
-select throws_ok(format($$ select public.arrange_trip(%L, '[]') $$, (select trip_id from ids)),
+select throws_ok(format($$ select public.arrange_trip(%L, '[]', 0) $$, (select trip_id from ids)),
   '42501', null, 'nobody can rearrange someone else''s trip');
 update public.trips set title = 'Taken over';
 select set_config('request.jwt.claims', '{"sub": "11111111-1111-4111-8111-111111111111", "role": "authenticated"}', true);

@@ -54,6 +54,7 @@ export type ProposalView = {
   request: string;
   source: "compass" | "rules";
   summary: string;
+  details: string[];
   createdAt: string;
   changes: (Change & { label: string })[];
 };
@@ -76,6 +77,8 @@ export type TripView = {
   pace: StoredTrip["pace"];
   budget: StoredTrip["budget"];
   currency: string;
+  role: StoredTrip["role"];
+  planRevision: number;
   days: DayView[];
   spares: SpareView[];
   proposals: ProposalView[];
@@ -173,6 +176,8 @@ export function buildTripView(trip: StoredTrip, saves: readonly ActivityCard[]):
     pace: trip.pace,
     budget: trip.budget,
     currency: trip.currency,
+    role: trip.role,
+    planRevision: trip.planRevision,
     days,
     spares: saves
       .filter((s) => !inTrip.has(s.sourceKey))
@@ -182,6 +187,7 @@ export function buildTripView(trip: StoredTrip, saves: readonly ActivityCard[]):
       request: p.request,
       source: p.source,
       summary: p.summary,
+      details: p.details,
       createdAt: p.createdAt,
       changes: p.changes.map((c) => ({ ...c, label: describeChange(c, trip, saves) })),
     })),

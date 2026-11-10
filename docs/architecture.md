@@ -13,6 +13,8 @@ src/
     (app)/drift/[cityId]     a city's places deck
     (app)/trips/new          Compose form
     (app)/trips/[tripId]     Trip Canvas
+    (app)/trips/[tripId]/drift  Group Drift
+    (app)/trips/join/[token] what an invite link joins, before joining
     api/cities/route.ts      city typeahead (signed-in)
     auth/callback/route.ts   exchanges email-link codes for a session
     globals.css              design tokens (light + dark) and base styles
@@ -24,6 +26,7 @@ src/
     drift/                   Drift cards, deck, Ask Compass, saved list
     map/                     shared Mapbox hook (Standard style, day/night lighting)
     trips/                   trip cards, Compose form, canvas, day column, stop row, map, change requests
+    huddle/                  live presence, members and invites, votes, Group Drift deck, matches
   lib/
     env.ts                   validated public configuration
     interests.ts             the shared interest vocabulary
@@ -38,6 +41,8 @@ src/
     drift/                   card schemas, prompts, ranking, grounding, deck builders, search, actions
     trips/                   compose engine, schedule, opening hours, routing, change rules, prompts,
                              queries, view model, actions
+    huddle/                  invite tokens, member queries, group scoring, Consensus, Group Drift deck,
+                             actions
     hues.ts                  the six travel hues and what each encodes
     geo.ts                   great-circle distance
     user/                    current user, public profile lookup, initials and avatar hues
@@ -168,6 +173,28 @@ Ask Compass ─► Compass (ids s1/a1 in the prompt, mapped back; unknown ids dr
 The Canvas shows drags at once and saves in the background; a failed save restores the saved order
 and says so. Times shown while saving are marked as updating.
 
+## Huddle
+
+```text
+owner ─► invite link: a 24-byte secret in the URL; only its SHA-256 is stored (7 days, revocable)
+      ─► invite by handle: same answer whether or not the handle exists (no account discovery)
+invitee ─► /trips/join/<secret>: invite_preview() says what joining shares ─► accept_trip_invite()
+members ─► trip page subscribes to the private Realtime channel "trip:<id>":
+             presence (who is here, which day) + UPDATE events on the trip row
+           every change to days, stops, proposals, votes, swipes or members touches the trip row
+             (signal_trip_change trigger) ─► everyone's page refreshes (debounced, held during a drag)
+           plan changes also bump plan_revision; arrange_trip() refuses a save based on an older one
+Group Drift ─► one deck per trip per day, ranked by the members' blended top interests
+            ─► match = at least two loved it and nobody passed ─► vote ─► an editor adds it
+Consensus ─► pool: the trip's stops + the caller's saves + places the group loved
+          ─► ranked by average member fit + group loves, at the slowest member's pace
+          ─► each member given at least one pick per day where the pool allows
+          ─► stored as a proposal (with per-member notes) ─► votes ─► an editor accepts or rejects
+```
+
+Members share only their display name, pace and top three interests (`trip_member_profiles()`), so
+Consensus works from those, never from full Travel DNA weights.
+
 ## Database security
 
 | Table           | Owner                                             | Others signed in | Visitors       |
@@ -180,18 +207,25 @@ and says so. Times shown while saving are marked as updating.
 | `saves`         | read, insert, update, delete                      | none             | none           |
 | `drift_decks`   | read, insert, update, delete                      | none             | none           |
 | `ai_usage`      | read (writes only via `consume_ai_quota()`)       | none             | none           |
-| `trips`         | read, insert, update name/date/currency, delete   | none             | none           |
-| `trip_days`     | read, insert, update title/mode/route, delete     | none             | none           |
-| `trip_stops`    | read, insert, update day/position/details, delete | none             | none           |
-| `proposals`     | read, insert, update status, delete               | none             | none           |
+| `trips`         | members read; editors update; owner deletes       | none             | none           |
+| `trip_days`     | members read; editors write                       | none             | none           |
+| `trip_stops`    | members read; editors write                       | none             | none           |
+| `proposals`     | members read; editors ask and decide              | none             | none           |
+| `trip_members`  | members read; owner sets roles, removes; leave    | none             | none           |
+| `trip_invites`  | owner only (hashes, never secrets)                | none             | none           |
+| `trip_votes`    | members read; each votes for themselves           | none             | none           |
+| `group_swipes`  | members read; each swipes for themselves          | none             | none           |
 
 - Every table has RLS on and explicit, column-level grants. `user_id` can appear in an update only
   because upserts re-send it; every policy pins it to the caller.
 - `profile_is_public(id)` is a `SECURITY DEFINER` helper returning only a boolean, so child-table
   policies can check visibility for visitors who cannot read `profiles` rows themselves.
-- Child rows of a trip must belong to the caller and point at the caller's own trip (`owns_trip()`).
-  `create_trip()` and `arrange_trip()` are `SECURITY INVOKER`: they run with the caller's grants and
+- Trip access is by membership and role (`is_trip_member()`, `can_edit_trip()`, `is_trip_owner()`,
+  `SECURITY DEFINER` helpers so policies can ask without recursion). Nobody can make themselves or
+  anyone else an owner, and the owner can't be removed.
+- `create_trip()` and `arrange_trip()` are `SECURITY INVOKER`: they run with the caller's grants and
   policies, and only make multi-row changes atomic. A stop's place can't be rewritten after insert.
+- Realtime: `realtime.messages` policies open the channel `trip:<id>` to that trip's members only.
 - Emails live in `auth.users` and are never exposed through these tables.
 - `supabase/tests/*.test.sql` checks each rule, including the negative cases.
 

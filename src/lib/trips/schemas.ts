@@ -79,7 +79,9 @@ export const changeSchema = z.discriminatedUnion("type", [
     reason: z.string().min(1).max(200),
   }),
 ]);
-export const changesSchema = z.array(changeSchema).max(10);
+/** A proposal holds at most this many changes (Consensus can rework a whole trip). */
+export const MAX_CHANGES = 30;
+export const changesSchema = z.array(changeSchema).max(MAX_CHANGES);
 export type Change = z.infer<typeof changeSchema>;
 
 export const changeRequestSchema = z.object({

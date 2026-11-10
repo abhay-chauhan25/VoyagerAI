@@ -19,6 +19,7 @@ import { stopProfile, type PriceLevel } from "./stops";
 
 type Client = SupabaseClient<Database>;
 export type Pace = Database["public"]["Enums"]["travel_pace"];
+export type TripRole = Database["public"]["Enums"]["trip_role"];
 export type Budget = Database["public"]["Enums"]["budget_band"];
 
 export type StoredStop = {
@@ -46,6 +47,8 @@ export type StoredProposal = {
   source: "compass" | "rules";
   summary: string;
   changes: Change[];
+  /** Per-member notes (Consensus explains its trade-offs here). */
+  details: string[];
   createdAt: string;
 };
 
@@ -61,6 +64,10 @@ export type StoredTrip = {
   budget: Budget;
   currency: string;
   updatedAt: string;
+  /** The caller's role on this trip. */
+  role: TripRole;
+  /** Bumped by every change to days and stops; saves based on an older revision are refused. */
+  planRevision: number;
   days: StoredDay[];
   stops: StoredStop[];
   proposals: StoredProposal[];
@@ -76,20 +83,22 @@ export type TripSummary = {
   stopCount: number;
   cover: StopPlace["photo"];
   updatedAt: string;
+  role: TripRole;
+  memberCount: number;
 };
 
 function asPriceLevel(value: number): PriceLevel {
   return (value >= 0 && value <= 3 ? value : 1) as PriceLevel;
 }
 
-/** The traveller's trips, most recently changed first, with a cover photo from their stops. */
+/** Trips the traveller belongs to, most recently changed first, with a cover photo from their stops. */
 export async function loadTrips(supabase: Client, userId: string): Promise<TripSummary[]> {
   const { data, error } = await supabase
     .from("trips")
     .select(
-      "id, title, start_date, day_count, updated_at, city:cities(name, country_code), stops:trip_stops(place, day_index, position)",
+      "id, title, start_date, day_count, updated_at, city:cities(name, country_code), stops:trip_stops(place, day_index, position), me:trip_members!inner(role, user_id), crew:trip_members(count)",
     )
-    .eq("user_id", userId)
+    .eq("me.user_id", userId)
     .order("updated_at", { ascending: false });
   if (error) throw new Error(`Could not load trips (${error.code})`);
   return data.map((row) => {
@@ -109,11 +118,13 @@ export async function loadTrips(supabase: Client, userId: string): Promise<TripS
       stopCount: row.stops.length,
       cover,
       updatedAt: row.updated_at,
+      role: row.me[0]?.role ?? "viewer",
+      memberCount: row.crew[0]?.count ?? 1,
     };
   });
 }
 
-/** One trip with its days, stops and pending proposals; null if it doesn't exist or isn't theirs. */
+/** One trip with its days, stops and pending proposals; null if it doesn't exist or they aren't a member. */
 export async function loadTrip(
   supabase: Client,
   userId: string,
@@ -122,10 +133,10 @@ export async function loadTrip(
   const { data, error } = await supabase
     .from("trips")
     .select(
-      "id, title, city_id, start_date, day_count, pace, budget, currency, updated_at, city:cities(name, country_code), days:trip_days(day_index, title, title_source, mode, route), stops:trip_stops(id, day_index, position, source_key, place, dwell_minutes, price_level, cost_amount), proposals(id, request, source, summary, changes, status, created_at)",
+      "id, title, city_id, start_date, day_count, pace, budget, currency, updated_at, plan_revision, city:cities(name, country_code), days:trip_days(day_index, title, title_source, mode, route), stops:trip_stops(id, day_index, position, source_key, place, dwell_minutes, price_level, cost_amount), proposals(id, request, source, summary, changes, details, status, created_at), me:trip_members!inner(role, user_id)",
     )
     .eq("id", tripId)
-    .eq("user_id", userId)
+    .eq("me.user_id", userId)
     .maybeSingle();
   if (error) throw new Error(`Could not load trip (${error.code})`);
   if (!data) return null;
@@ -181,6 +192,9 @@ export async function loadTrip(
           source: p.source as StoredProposal["source"],
           summary: p.summary,
           changes: changes.data,
+          details: Array.isArray(p.details)
+            ? p.details.filter((d): d is string => typeof d === "string").slice(0, 12)
+            : [],
           createdAt: p.created_at,
         },
       ];
@@ -199,6 +213,8 @@ export async function loadTrip(
     budget: data.budget,
     currency: data.currency,
     updatedAt: data.updated_at,
+    role: data.me[0]?.role ?? "viewer",
+    planRevision: data.plan_revision,
     days,
     stops: stops.sort((a, b) => a.day - b.day || a.position - b.position),
     proposals,

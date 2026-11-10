@@ -170,3 +170,29 @@ export function resolveProposal(answer: ProposalAnswer, plan: Plan): Change[] {
     return spare ? [{ type: "add", sourceKey: spare.sourceKey, toDay: day, reason: c.reason }] : [];
   });
 }
+
+/* ---------- Consensus summary ---------- */
+
+export const consensusSummarySchema = z.object({ summary: z.string().min(10).max(300) });
+export type ConsensusSummary = z.infer<typeof consensusSummarySchema>;
+
+/**
+ * One or two sentences explaining a group plan's trade-offs, written only from the facts computed
+ * for it (member names and interests are the members' own text, so they go in as data).
+ */
+export function consensusSummaryPrompt(facts: readonly string[]) {
+  return {
+    system: [
+      ROLE,
+      DATA_RULE,
+      "Explain in at most two sentences (under 50 words) how this group trip plan balances its travellers, naming the main trade-off.",
+      "Use only the facts given. Do not add places, numbers or preferences that are not in them.",
+    ].join("\n"),
+    user: `Facts about the plan:\n${asData("facts", facts.join("\n"), 2000)}`,
+    maxOutputTokens: 256,
+    repair: (json: unknown) =>
+      isRecord(json) && typeof json.summary === "string"
+        ? { summary: json.summary.trim().slice(0, 300) }
+        : json,
+  };
+}

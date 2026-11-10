@@ -104,3 +104,43 @@ export async function pickCity(page: Page, query: string, optionName: RegExp) {
   }).toPass({ timeout: 15_000 });
   await page.getByRole("option", { name: optionName }).first().click();
 }
+
+const LISBON = 2267057;
+
+/** A new traveller with Travel DNA who has loved `saves` places in Lisbon (fixture places). */
+export async function travellerWithSaves(
+  page: Page,
+  tag: string,
+  saves: number,
+  name = "Ana Example",
+) {
+  await signUpAndConfirm(page, {
+    name,
+    email: uniqueEmail(tag),
+    password: "voyager2026",
+  });
+  await completeOnboarding(page);
+  await page.goto(`/drift/${LISBON}`);
+  for (let i = 1; i <= saves; i += 1) {
+    await expect(page.getByText(new RegExp(`^${i} of \\d+$`))).toBeVisible();
+    await page.getByRole("button", { name: "Love it", exact: true }).click();
+    await expect(page.getByText(new RegExp(`^${i + 1} of \\d+$`))).toBeVisible();
+  }
+  // Every save has landed before Compose reads them.
+  await expect(async () => {
+    await page.goto("/drift?view=saved");
+    await expect(page.getByRole("button", { name: /^Remove / })).toHaveCount(saves, {
+      timeout: 1000,
+    });
+  }).toPass({ timeout: 15_000 });
+}
+
+/** Composes a Lisbon trip of `days` days from the traveller's saves and opens it. */
+export async function composeLisbon(page: Page, days: number) {
+  await page.goto("/trips/new");
+  await expect(page.getByRole("radio", { name: /Lisbon/ })).toBeChecked();
+  const field = page.getByLabel("Days", { exact: true });
+  await field.fill(String(days));
+  await page.getByRole("button", { name: "Compose trip" }).click();
+  await page.waitForURL(/\/trips\/[0-9a-f-]{36}$/);
+}

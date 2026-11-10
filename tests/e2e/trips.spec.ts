@@ -1,41 +1,15 @@
-import { expect, test, type Page } from "@playwright/test";
-import { completeOnboarding, signUpAndConfirm, uniqueEmail } from "./helpers";
+import { expect, test } from "@playwright/test";
+import {
+  completeOnboarding,
+  composeLisbon,
+  signUpAndConfirm,
+  travellerWithSaves,
+  uniqueEmail,
+} from "./helpers";
 
 // The server runs with VOYAGER_FIXTURES=1: places, travel times and Compass are deterministic
 // fixtures. A request containing "simulate outage" makes Compass fail so the rule-based path runs.
 const PASSWORD = "voyager2026";
-const LISBON = 2267057;
-
-async function travellerWithSaves(page: Page, tag: string, saves: number) {
-  await signUpAndConfirm(page, {
-    name: "Ana Example",
-    email: uniqueEmail(tag),
-    password: PASSWORD,
-  });
-  await completeOnboarding(page);
-  await page.goto(`/drift/${LISBON}`);
-  for (let i = 1; i <= saves; i += 1) {
-    await expect(page.getByText(new RegExp(`^${i} of \\d+$`))).toBeVisible();
-    await page.getByRole("button", { name: "Love it", exact: true }).click();
-    await expect(page.getByText(new RegExp(`^${i + 1} of \\d+$`))).toBeVisible();
-  }
-  // Every save has landed before Compose reads them.
-  await expect(async () => {
-    await page.goto("/drift?view=saved");
-    await expect(page.getByRole("button", { name: /^Remove / })).toHaveCount(saves, {
-      timeout: 1000,
-    });
-  }).toPass({ timeout: 15_000 });
-}
-
-async function composeLisbon(page: Page, days: number) {
-  await page.goto("/trips/new");
-  await expect(page.getByRole("radio", { name: /Lisbon/ })).toBeChecked();
-  const field = page.getByLabel("Days", { exact: true });
-  await field.fill(String(days));
-  await page.getByRole("button", { name: "Compose trip" }).click();
-  await page.waitForURL(/\/trips\/[0-9a-f-]{36}$/);
-}
 
 test.describe("Trips", () => {
   test.skip(({ isMobile }) => isMobile, "account flows run on desktop only");
@@ -143,8 +117,16 @@ test.describe("Trips", () => {
     const announcer = page.locator('[id^="DndLiveRegion"]');
     await page.keyboard.press("Space");
     await expect(announcer).toContainText(`Picked up ${before[0]}`);
-    await page.keyboard.press("ArrowDown");
-    await expect(announcer).toContainText(`${before[0]} is now at ${before[1]}'s place on day 1`);
+    // Under load dnd-kit may still be measuring the list right after pick-up and ignore a key; press
+    // again only while nothing has moved, so a late first press is never doubled.
+    await expect(async () => {
+      if ((await announcer.innerText()).startsWith("Picked up"))
+        await page.keyboard.press("ArrowDown");
+      await expect(announcer).toContainText(
+        `${before[0]} is now at ${before[1]}'s place on day 1`,
+        { timeout: 1000 },
+      );
+    }).toPass({ timeout: 10_000 });
     await page.keyboard.press("Space");
     await expect(announcer).toContainText(`Dropped ${before[0]}`);
     await expect.poll(names).toEqual([before[1], before[0], before[2]]);

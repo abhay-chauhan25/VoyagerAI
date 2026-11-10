@@ -104,9 +104,9 @@ Principles:
 - `drift_decks` — today's cached deck per traveller and deck (destinations, or a city's places). **(built)**
 - `ai_usage` — AI calls per traveller per day, written only through `consume_ai_quota()`. **(built)**
 - `trips`, `trip_days` (title, travel mode, cached route), `trip_stops` (place snapshot, visit length, price level, optional amount). Owner-only for now. **(built)**
-- `trip_members` (role: owner/editor/viewer) — Huddle.
+- `trip_members` (role: owner/editor/viewer), `trip_invites` (hashed link secrets), `trip_person_invites` (by handle). **(built)**
 - `proposals` — change sets from Compass (or the rule-based fallback) awaiting accept/reject. **(built)**
-- `votes` — Huddle decisions.
+- `trip_votes` — for/against on proposals and places; `group_decks`, `group_swipes` — Group Drift. **(built)**
 - `cities` — GeoNames reference list (34k places, 15,000+ people), loaded locally. **(built)**
 - `visits` — Atlas entries (country, optional city, optional year). **(built)**
 - `notes`, `note_photos`, `follows` — Field Notes.

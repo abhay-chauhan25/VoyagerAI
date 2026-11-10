@@ -77,6 +77,10 @@ type Props = {
   currency: string;
   pace: string;
   budget: string;
+  /** Viewers see the day but can't change it. */
+  canEdit: boolean;
+  /** Other members looking at this day right now. */
+  lookers: string[];
   hotStop: string | null;
   stale: boolean;
   busy: boolean;
@@ -97,6 +101,8 @@ export function DayColumn({
   currency,
   pace,
   budget,
+  canEdit,
+  lookers,
   hotStop,
   stale,
   busy,
@@ -130,6 +136,15 @@ export function DayColumn({
             >
               {day.title ?? (stops.length ? `Day ${day.index + 1}` : "A free day")}
             </h3>
+            {lookers.length ? (
+              <span className="text-meta whitespace-nowrap text-muted">
+                <span
+                  aria-hidden="true"
+                  className="mr-1 inline-block size-2 rounded-full bg-positive"
+                />
+                {lookers.join(", ")} {lookers.length === 1 ? "is" : "are"} here
+              </span>
+            ) : null}
           </div>
           <div className="flex items-center gap-2">
             <div
@@ -143,7 +158,7 @@ export function DayColumn({
                   type="button"
                   role="radio"
                   aria-checked={day.mode === mode}
-                  disabled={busy}
+                  disabled={busy || !canEdit}
                   onClick={() => day.mode !== mode && onMode(day.index, mode)}
                   className={`pressable min-h-8 rounded-[3px] px-2.5 text-meta ${
                     day.mode === mode
@@ -155,7 +170,7 @@ export function DayColumn({
                 </button>
               ))}
             </div>
-            {stops.length > 2 ? (
+            {canEdit && stops.length > 2 ? (
               <button
                 type="button"
                 disabled={busy}
@@ -197,7 +212,9 @@ export function DayColumn({
         >
           {stops.length === 0 ? (
             <li className="flex min-h-20 items-center justify-center px-4 text-center text-meta text-muted">
-              Drag a stop here, or add one from your saves below.
+              {canEdit
+                ? "Drag a stop here, or add one from your saves below."
+                : "Nothing planned for this day yet."}
             </li>
           ) : (
             stops.map((stop, i) => (
@@ -206,6 +223,7 @@ export function DayColumn({
                   stop={stop}
                   number={i + 1}
                   day={day.index}
+                  canEdit={canEdit}
                   dayCount={dayCount}
                   currency={currency}
                   hot={hotStop === stop.id}

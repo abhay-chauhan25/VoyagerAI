@@ -29,6 +29,12 @@ product blueprint and stage plan, and [`docs/architecture.md`](docs/architecture
   and watch pace and budget meters. **Ask Compass** to change the trip ("make day 2 slower", "it's
   raining on Thursday") and accept or reject each proposed change; without AI a rule-based parser
   handles common requests.
+- **Huddle**: share a trip by invite link (editor or viewer, 7 days, revocable) or by @handle.
+  Members see who is here and which day they're on, and every change appears for everyone within a
+  second (Supabase Realtime, on a private channel per trip). **Group Drift** deals the same deck to
+  everyone; places all swipers loved become matches that can be voted on and added. **Consensus**
+  drafts a plan balancing everyone's top interests at the slowest member's pace, explains the
+  trade-offs, and goes to a vote like any proposal. Owners manage roles; viewers swipe and vote.
 - App shell with Field Notes (empty state for now), day/night/auto theme in the "Postcards" palette,
   maps on Mapbox Standard lit for day or night.
 

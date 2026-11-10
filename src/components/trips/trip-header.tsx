@@ -70,13 +70,15 @@ export function TripHeader({
       ) : (
         <div className="flex flex-wrap items-baseline gap-x-3">
           <h1 className="text-title font-semibold tracking-[-0.01em]">{view.title}</h1>
-          <button
-            type="button"
-            onClick={() => setEditing(true)}
-            className="text-meta text-muted underline-offset-4 hover:text-ink hover:underline"
-          >
-            Rename
-          </button>
+          {view.role !== "viewer" ? (
+            <button
+              type="button"
+              onClick={() => setEditing(true)}
+              className="text-meta text-muted underline-offset-4 hover:text-ink hover:underline"
+            >
+              Rename
+            </button>
+          ) : null}
         </div>
       )}
       <p className="text-ui text-muted">
@@ -84,35 +86,37 @@ export function TripHeader({
         {tripDates(view.startDate, view.dayCount)} · {view.dayCount}{" "}
         {view.dayCount === 1 ? "day" : "days"} · {stops} {stops === 1 ? "stop" : "stops"}
       </p>
-      <div className="flex flex-wrap items-center gap-3 text-meta">
-        {confirming ? (
-          <form action={deleteTrip} className="flex flex-wrap items-center gap-3">
-            <input type="hidden" name="tripId" value={view.id} />
-            <span className="font-semibold">Delete this trip? This can&apos;t be undone.</span>
+      {view.role === "owner" ? (
+        <div className="flex flex-wrap items-center gap-3 text-meta">
+          {confirming ? (
+            <form action={deleteTrip} className="flex flex-wrap items-center gap-3">
+              <input type="hidden" name="tripId" value={view.id} />
+              <span className="font-semibold">Delete this trip? This can&apos;t be undone.</span>
+              <button
+                type="submit"
+                className="pressable min-h-9 rounded-control bg-negative px-3 font-semibold text-panel"
+              >
+                Delete trip
+              </button>
+              <button
+                type="button"
+                onClick={() => setConfirming(false)}
+                className="pressable min-h-9 px-2 text-muted hover:text-ink"
+              >
+                Keep it
+              </button>
+            </form>
+          ) : (
             <button
-              type="submit"
-              className="pressable min-h-9 rounded-control bg-negative px-3 font-semibold text-panel"
+              type="button"
+              onClick={() => setConfirming(true)}
+              className="text-muted underline-offset-4 hover:text-negative hover:underline"
             >
               Delete trip
             </button>
-            <button
-              type="button"
-              onClick={() => setConfirming(false)}
-              className="pressable min-h-9 px-2 text-muted hover:text-ink"
-            >
-              Keep it
-            </button>
-          </form>
-        ) : (
-          <button
-            type="button"
-            onClick={() => setConfirming(true)}
-            className="text-muted underline-offset-4 hover:text-negative hover:underline"
-          >
-            Delete trip
-          </button>
-        )}
-      </div>
+          )}
+        </div>
+      ) : null}
     </header>
   );
 }

@@ -41,7 +41,13 @@ product blueprint and stage plan, and [`docs/architecture.md`](docs/architecture
   it, choose it to fly in. The sidebar still goes anywhere directly. Where 3D can't run smoothly
   (or reduced motion is on) the same links sit on a drawn plane, and a switch lets you pick either.
   The homepage opens on the same plane and walks through its parts as you scroll.
-- App shell with Field Notes (empty state for now), day/night/auto theme in the "Golden hour livery"
+- **Field Notes**: rate a place from one of your trips, add a few words and up to four photos
+  (5 MB each; location and camera details are removed in the browser before upload). Every note
+  starts private; you choose per note whether followers or everyone on Voyager can see it. Follow
+  travellers with public profiles. Publish a trip as a **story** (Compass can draft it for you to
+  edit, or a plain template is used), and **fork** any story you can see into a trip of your own.
+  A story shares places and days only.
+- App shell with day/night/auto theme in the "Golden hour livery"
   palette, maps on Mapbox Standard lit for day or night.
 
 ## Requirements

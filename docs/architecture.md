@@ -195,6 +195,27 @@ Consensus ─► pool: the trip's stops + the caller's saves + places the group 
 Members share only their display name, pace and top three interests (`trip_member_profiles()`), so
 Consensus works from those, never from full Travel DNA weights.
 
+## Field Notes
+
+- **One rule for who sees what.** `can_see(author, visibility)` (own, public, or followers-only and
+  you follow them) is the read policy on both `notes` and `trip_stories`. Photos have no rule of
+  their own: a photo row is readable when its note is, and a photo file is readable when its row is.
+- **Photos** live in a private Storage bucket (`note-photos`, 5 MB, JPEG/PNG/WebP), under
+  `<author>/<note>/<random>.<ext>`. The browser redraws each photo on a canvas before upload, which
+  drops location and camera metadata. The server reads the file's first bytes to decide what it
+  really is, and the bucket enforces size and type again. Pages show photos through one-hour signed
+  links made with the reader's own access.
+- **Author names** are stamped onto each note and story by a trigger, from the author's profile, so
+  readers see a name without being able to read a private profile, and a client can't choose it.
+- **Stories** are made only by `publish_trip_story`, which checks ownership and copies the trip's
+  places and days into a snapshot itself. Readers and forks use the snapshot, never the live trip,
+  so publishing opens no access to the trip, its members, votes or proposals.
+- **Forking** (`fork_trip_story`) runs with the caller's own access: it can only read a story the
+  caller can see, and it makes the new trip through the same `create_trip` every trip uses.
+- **Story drafts** go through the same AI path as the rest: quota first, schema-validated output,
+  and a plain template when Compass is off, over its limit or fails. Nothing is saved until the
+  owner presses Publish.
+
 ## Database security
 
 | Table           | Owner                                             | Others signed in | Visitors       |

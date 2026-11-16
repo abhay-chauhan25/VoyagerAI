@@ -97,6 +97,32 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"follows": {
+                  Row: {
+                    "created_at": string,"followee_id": string,"follower_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"followee_id": string,"follower_id"?: string
+                  }
+                  Update: {
+                    "created_at"?: string,"followee_id"?: string,"follower_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "follows_followee_id_fkey"
+      columns: ["followee_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "follows_follower_id_fkey"
+      columns: ["follower_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"group_decks": {
                   Row: {
                     "built_on": string,"cards": NonNullable<Json>,"created_at": string,"trip_id": string
@@ -137,6 +163,58 @@ isOneToOne: false
       referencedColumns: ["id"]
     },{
       foreignKeyName: "group_swipes_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"note_photos": {
+                  Row: {
+                    "alt": string,"created_at": string,"id": string,"note_id": string,"path": string,"position": number,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "alt"?: string,"created_at"?: string,"id"?: string,"note_id": string,"path": string,"position": number,"user_id"?: string
+                  }
+                  Update: {
+                    "alt"?: string,"created_at"?: string,"id"?: string,"note_id"?: string,"path"?: string,"position"?: number,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "note_photos_note_id_fkey"
+      columns: ["note_id"]
+isOneToOne: false
+      referencedRelation: "notes"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "note_photos_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"notes": {
+                  Row: {
+                    "author_name": string,"body": string,"city_name": string,"created_at": string,"id": string,"place_name": string,"rating": number,"source_key": string,"trip_id": string | null,"user_id": string,"visibility": Database["public"]['Enums']["note_visibility"]
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "author_name"?: string,"body": string,"city_name": string,"created_at"?: string,"id"?: string,"place_name": string,"rating": number,"source_key": string,"trip_id"?: string | null,"user_id"?: string,"visibility"?: Database["public"]['Enums']["note_visibility"]
+                  }
+                  Update: {
+                    "author_name"?: string,"body"?: string,"city_name"?: string,"created_at"?: string,"id"?: string,"place_name"?: string,"rating"?: number,"source_key"?: string,"trip_id"?: string | null,"user_id"?: string,"visibility"?: Database["public"]['Enums']["note_visibility"]
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "notes_trip_id_fkey"
+      columns: ["trip_id"]
+isOneToOne: false
+      referencedRelation: "trips"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "notes_user_id_fkey"
       columns: ["user_id"]
 isOneToOne: false
       referencedRelation: "profiles"
@@ -203,6 +281,38 @@ isOneToOne: false
       referencedColumns: ["geoname_id"]
     },{
       foreignKeyName: "saves_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"story_forks": {
+                  Row: {
+                    "created_at": string,"story_trip_id": string | null,"trip_id": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"story_trip_id"?: string | null,"trip_id": string,"user_id"?: string
+                  }
+                  Update: {
+                    "created_at"?: string,"story_trip_id"?: string | null,"trip_id"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "story_forks_story_trip_id_fkey"
+      columns: ["story_trip_id"]
+isOneToOne: false
+      referencedRelation: "trip_stories"
+      referencedColumns: ["trip_id"]
+    },{
+      foreignKeyName: "story_forks_trip_id_fkey"
+      columns: ["trip_id"]
+isOneToOne: true
+      referencedRelation: "trips"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "story_forks_user_id_fkey"
       columns: ["user_id"]
 isOneToOne: false
       referencedRelation: "profiles"
@@ -371,6 +481,32 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"trip_stories": {
+                  Row: {
+                    "author_name": string,"body": string,"published_at": string,"snapshot": NonNullable<Json>,"title": string,"trip_id": string,"user_id": string,"visibility": Database["public"]['Enums']["note_visibility"]
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "author_name"?: string,"body": string,"published_at"?: string,"snapshot": NonNullable<Json>,"title": string,"trip_id": string,"user_id"?: string,"visibility"?: Database["public"]['Enums']["note_visibility"]
+                  }
+                  Update: {
+                    "author_name"?: string,"body"?: string,"published_at"?: string,"snapshot"?: NonNullable<Json>,"title"?: string,"trip_id"?: string,"user_id"?: string,"visibility"?: Database["public"]['Enums']["note_visibility"]
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "trip_stories_trip_id_fkey"
+      columns: ["trip_id"]
+isOneToOne: true
+      referencedRelation: "trips"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "trip_stories_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"trip_votes": {
                   Row: {
                     "created_at": string,"subject": string,"trip_id": string,"user_id": string,"value": number
@@ -464,11 +600,20 @@ isOneToOne: false
 "can_edit_trip":
 { Args: { "p_trip": string }; Returns: boolean
                            },
+"can_see":
+{ Args: { "p_author": string,"p_visibility": Database["public"]['Enums']["note_visibility"] }; Returns: boolean
+                           },
 "consume_ai_quota":
 { Args: { "daily_limit": number }; Returns: boolean
                            },
 "create_trip":
 { Args: { "p_days": Json,"p_stops": Json,"p_trip": Json }; Returns: string
+                           },
+"follows_user":
+{ Args: { "p_author": string }; Returns: boolean
+                           },
+"fork_trip_story":
+{ Args: { "p_start": string,"p_story": string }; Returns: string
                            },
 "invite_by_handle":
 { Args: { "p_handle": string,"p_role": Database["public"]['Enums']["trip_role"],"p_trip": string }; Returns: undefined
@@ -495,6 +640,9 @@ isOneToOne: false
 "profile_is_public":
 { Args: { "profile_id": string }; Returns: boolean
                            },
+"publish_trip_story":
+{ Args: { "p_body": string,"p_title": string,"p_trip": string,"p_visibility": Database["public"]['Enums']["note_visibility"] }; Returns: string
+                           },
 "respond_to_trip_invitation":
 { Args: { "p_accept": boolean,"p_invite": string }; Returns: string
                            },
@@ -516,6 +664,9 @@ isOneToOne: false
         isOneToOne: false
         isSetofReturn: true
       } },
+"story_fork_count":
+{ Args: { "p_story": string }; Returns: number
+                           },
 "trip_member_profiles":
 { Args: { "p_trip": string }; Returns: {
               "display_name": string,"pace": Database["public"]['Enums']["travel_pace"],"role": Database["public"]['Enums']["trip_role"],"top_interests": (string)[],"user_id": string
@@ -529,7 +680,7 @@ isOneToOne: false
                            }
           }
           Enums: {
-            "budget_band": "shoestring"|"comfortable"|"splurge","dna_reaction": "pass"|"love"|"more","proposal_status": "pending"|"applied"|"dismissed","save_kind": "destination"|"activity","travel_mode": "walking"|"driving","travel_pace": "slow"|"balanced"|"full","trip_role": "owner"|"editor"|"viewer"
+            "budget_band": "shoestring"|"comfortable"|"splurge","dna_reaction": "pass"|"love"|"more","note_visibility": "private"|"followers"|"public","proposal_status": "pending"|"applied"|"dismissed","save_kind": "destination"|"activity","travel_mode": "walking"|"driving","travel_pace": "slow"|"balanced"|"full","trip_role": "owner"|"editor"|"viewer"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -649,7 +800,7 @@ export const Constants = {
           }
         },"public": {
           Enums: {
-            "budget_band": ["shoestring", "comfortable", "splurge"],"dna_reaction": ["pass", "love", "more"],"proposal_status": ["pending", "applied", "dismissed"],"save_kind": ["destination", "activity"],"travel_mode": ["walking", "driving"],"travel_pace": ["slow", "balanced", "full"],"trip_role": ["owner", "editor", "viewer"]
+            "budget_band": ["shoestring", "comfortable", "splurge"],"dna_reaction": ["pass", "love", "more"],"note_visibility": ["private", "followers", "public"],"proposal_status": ["pending", "applied", "dismissed"],"save_kind": ["destination", "activity"],"travel_mode": ["walking", "driving"],"travel_pace": ["slow", "balanced", "full"],"trip_role": ["owner", "editor", "viewer"]
           }
         }
 } as const

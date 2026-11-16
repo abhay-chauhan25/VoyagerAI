@@ -10,7 +10,7 @@ import { PLANE_SECTIONS, type PlaneSectionId } from "@/lib/boarding/sections";
 import { hueStyle } from "@/lib/hues";
 
 /** What each part of the plane stands for, told to someone who hasn't signed up yet. */
-const STORY: Record<PlaneSectionId, { heading: string; body: string; soon?: boolean }> = {
+const STORY: Record<PlaneSectionId, { heading: string; body: string }> = {
   cockpit: {
     heading: "Compose a trip",
     body: "Pick a city and your dates. Compose groups nearby places into days, checks opening hours and counts the walking time. Ask Compass to slow a day down or plan around rain, then accept only the changes you like.",
@@ -34,7 +34,6 @@ const STORY: Record<PlaneSectionId, { heading: string; body: string; soon?: bool
   hold: {
     heading: "Bring stories back",
     body: "Reviews, photos and whole trips from other travellers, ready to copy into your own plan.",
-    soon: true,
   },
 };
 
@@ -173,11 +172,8 @@ export function Flight({ signedIn }: { signedIn: boolean }) {
                     style={hueStyle(section.hue)}
                     className="pointer-events-auto flex w-full max-w-[26rem] flex-col gap-3 rounded-card bg-panel p-6 text-ink shadow-[0_18px_50px_-18px_rgb(10_16_40/0.55)]"
                   >
-                    <p className="flex items-center justify-between font-mono text-[0.75rem] tracking-[0.14em] uppercase">
-                      <span className="hue-text">
-                        {section.part} · {section.code}
-                      </span>
-                      {story.soon ? <span className="text-muted">Coming next</span> : null}
+                    <p className="hue-text font-mono text-[0.75rem] tracking-[0.14em] uppercase">
+                      {section.part} · {section.code}
                     </p>
                     <h3 className="font-display text-[2rem] leading-[1.05] font-medium">
                       {story.heading}

@@ -1,5 +1,6 @@
 import "server-only";
 import { generateJson, type AiResult } from "@/lib/ai/gemini";
+import { storyDraftSchema, storyPrompt, type StoryDraft, type StoryTrip } from "@/lib/notes/story";
 import { serverEnv } from "@/lib/server-env";
 import type { Plan } from "./plan";
 import {
@@ -26,6 +27,7 @@ export type TripProviders = {
   proposeChanges(profile: string, plan: Plan, request: string): Promise<AiResult<ProposalAnswer>>;
   route(points: readonly Point[], mode: TravelMode): Promise<Pick<Route, "legs" | "line"> | null>;
   consensusSummary(facts: readonly string[]): Promise<AiResult<ConsensusSummary>>;
+  storyDraft(trip: StoryTrip): Promise<AiResult<StoryDraft>>;
 };
 
 const realProviders: TripProviders = {
@@ -34,6 +36,7 @@ const realProviders: TripProviders = {
     generateJson(proposalAnswerSchema, proposalPrompt(profile, plan, request)),
   route: (points, mode) => mapboxRoute(points, mode, serverEnv().MAPBOX_SERVER_TOKEN),
   consensusSummary: (facts) => generateJson(consensusSummarySchema, consensusSummaryPrompt(facts)),
+  storyDraft: (trip) => generateJson(storyDraftSchema, storyPrompt(trip)),
 };
 
 /**
@@ -85,6 +88,18 @@ const fixtureProviders: TripProviders = {
       ok: true,
       model: "fixture",
       data: { summary: `Balances everyone: ${facts[0] ?? "a shared plan."}`.slice(0, 300) },
+    };
+  },
+  async storyDraft(trip) {
+    // A trip titled "simulate outage" makes the AI fail, so the plain template is exercised.
+    if (/simulate outage/i.test(trip.title)) return { ok: false, reason: "unavailable" };
+    return {
+      ok: true,
+      model: "fixture",
+      data: {
+        title: `${trip.cityName}, day by day`,
+        body: `My time in ${trip.cityName} started at ${trip.days[0]?.places[0] ?? "the centre"}. This is a draft from Compass for me to rewrite.`,
+      },
     };
   },
 };

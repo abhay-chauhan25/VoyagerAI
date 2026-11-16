@@ -5,6 +5,7 @@ import { Wordmark } from "@/components/brand/mark";
 import { AtlasMap } from "@/components/atlas/atlas-map";
 import { StatsStrip } from "@/components/atlas/stats-strip";
 import { VisitList } from "@/components/atlas/visit-list";
+import { FollowButton } from "@/components/notes/note-controls";
 import { Avatar } from "@/components/shell/avatar";
 import { loadVisits } from "@/lib/atlas/queries";
 import { atlasStats } from "@/lib/atlas/stats";
@@ -33,6 +34,20 @@ export default async function PublicProfilePage({ params }: Params) {
     loadVisits(supabase, profile.id),
     loadTravelDna(supabase, profile.id),
   ]);
+  // A signed-in visitor can follow a public profile; visitors and the owner see no button.
+  const { data: session } = await supabase.auth.getClaims();
+  const viewerId = session?.claims?.sub ?? null;
+  const canFollow = Boolean(viewerId) && viewerId !== profile.id && profile.isPublic;
+  let following = false;
+  if (canFollow && viewerId) {
+    const { data: follow } = await supabase
+      .from("follows")
+      .select("followee_id")
+      .eq("follower_id", viewerId)
+      .eq("followee_id", profile.id)
+      .maybeSingle();
+    following = Boolean(follow);
+  }
   const stats = atlasStats(visits);
   const traits = dna ? rankTraits(dna.weights, {}).slice(0, TOP_TRAITS) : [];
   const countryCodes = [...new Set(visits.map((v) => v.country_code))];
@@ -68,6 +83,11 @@ export default async function PublicProfilePage({ params }: Params) {
               {profile.homeCity ? ` · ${profile.homeCity}` : ""}
             </p>
           </div>
+          {canFollow ? (
+            <div className="ml-auto">
+              <FollowButton userId={profile.id} name={profile.displayName} following={following} />
+            </div>
+          ) : null}
         </div>
 
         <StatsStrip stats={stats} />

@@ -113,7 +113,7 @@ test.describe("Huddle", () => {
 
     // A viewer sees the plan but can't change it.
     await expect(kai.getByRole("heading", { name: "Proposed changes" })).toBeVisible();
-    await expect(kai.getByRole("button", { name: /^Move / })).toHaveCount(0);
+    await expect(kai.getByRole("button", { name: /^Stop \d+: move / })).toHaveCount(0);
     await expect(kai.getByText("Edit stop")).toHaveCount(0);
     await expect(kai.getByRole("button", { name: "Propose a Consensus plan" })).toHaveCount(0);
 

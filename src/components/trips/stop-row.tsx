@@ -109,7 +109,7 @@ export function StopRow({
             type="button"
             {...attributes}
             {...listeners}
-            aria-label={`Move ${stop.name}. Press space to pick up, arrows to move, space to drop.`}
+            aria-label={`Stop ${number}: move ${stop.name}. Press space to pick up, arrows to move, space to drop.`}
             className="hue-fill pressable flex size-7 shrink-0 cursor-grab touch-none items-center justify-center rounded-full text-meta font-bold active:cursor-grabbing"
           >
             {number}

@@ -18,6 +18,9 @@ blob-report/
 .env.*
 !.env.example
 
+# demo sign-in details written by `npm run demo:seed`
+*.local.txt
+
 # supabase local state
 supabase/.temp/
 supabase/.branches/

@@ -38,8 +38,8 @@ test.describe("Trips", () => {
     const day1 = page.getByRole("list", { name: "Stops on day 1" });
     const day2 = page.getByRole("list", { name: "Stops on day 2" });
     // Six saves over two balanced days: three each, named by Compass, timed from 09:30.
-    await expect(day1.getByRole("button", { name: /^Move / })).toHaveCount(3);
-    await expect(day2.getByRole("button", { name: /^Move / })).toHaveCount(3);
+    await expect(day1.getByRole("button", { name: /^Stop \d+: move / })).toHaveCount(3);
+    await expect(day2.getByRole("button", { name: /^Stop \d+: move / })).toHaveCount(3);
     await expect(page.getByRole("heading", { name: /^Around Example /, level: 3 })).toHaveCount(2);
     await expect(day1.getByText(/^09:30–/)).toBeVisible();
     await expect(page.getByRole("meter", { name: "Pace" }).first()).toBeVisible();
@@ -50,20 +50,20 @@ test.describe("Trips", () => {
     await first.getByText("Edit stop").click();
     await first.getByLabel("Move to").selectOption("1");
     await expect(day2.getByRole("button", { name: `Move ${name}.`, exact: false })).toBeVisible();
-    await expect(day1.getByRole("button", { name: /^Move / })).toHaveCount(2);
+    await expect(day1.getByRole("button", { name: /^Stop \d+: move / })).toHaveCount(2);
     await page.reload();
-    await expect(day2.getByRole("button", { name: /^Move / })).toHaveCount(4);
+    await expect(day2.getByRole("button", { name: /^Stop \d+: move / })).toHaveCount(4);
 
     // Compass proposes (the fixture moves day 1's first stop to day 2); nothing changes until accepted.
     await page.getByLabel("What should change?").fill("Spread things out a bit");
     await page.getByRole("button", { name: "Ask", exact: true }).click();
     const proposal = page.getByRole("article", { name: /Proposal for/ });
     await expect(proposal.getByText("Compass suggests")).toBeVisible();
-    await expect(day2.getByRole("button", { name: /^Move / })).toHaveCount(4);
+    await expect(day2.getByRole("button", { name: /^Stop \d+: move / })).toHaveCount(4);
     await proposal.getByRole("button", { name: "Accept all" }).click();
     await expect(page.getByRole("status").filter({ hasText: "Applied 1 change." })).toBeVisible();
-    await expect(day1.getByRole("button", { name: /^Move / })).toHaveCount(1);
-    await expect(day2.getByRole("button", { name: /^Move / })).toHaveCount(5);
+    await expect(day1.getByRole("button", { name: /^Stop \d+: move / })).toHaveCount(1);
+    await expect(day2.getByRole("button", { name: /^Stop \d+: move / })).toHaveCount(5);
 
     // With Compass down, a simple request is still understood, and rejecting leaves the trip alone.
     await page.getByLabel("What should change?").fill("simulate outage: make day 2 slower");
@@ -73,7 +73,7 @@ test.describe("Trips", () => {
     await expect(fallback.getByRole("checkbox")).toHaveCount(1);
     await fallback.getByRole("button", { name: "Reject all" }).click();
     await expect(page.getByRole("article")).toHaveCount(0);
-    await expect(day1.getByRole("button", { name: /^Move / })).toHaveCount(1);
+    await expect(day1.getByRole("button", { name: /^Stop \d+: move / })).toHaveCount(1);
 
     await page.goto("/trips");
     await expect(page.getByRole("link", { name: /Lisbon, 2 days/ })).toBeVisible();

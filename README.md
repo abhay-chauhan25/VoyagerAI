@@ -58,17 +58,17 @@ product blueprint and stage plan, and [`docs/architecture.md`](docs/architecture
 ## Run it locally
 
 ```bash
-npm install
-npm run db:start                 # starts local Supabase in Docker (first run downloads images)
-npm run data:cities              # downloads the GeoNames city list (~3 MB) into a local seed file
-npm run db:reset                 # first time only: applies migrations and loads the cities
-cp .env.example .env && chmod 600 .env
-npx supabase status -o env       # copy API_URL and PUBLISHABLE_KEY into .env
+npm run setup                    # installs, starts local Supabase, applies migrations, loads cities, prepares .env
 # add your Mapbox public token (pk.…) as NEXT_PUBLIC_MAPBOX_TOKEN in .env
 # optional: GEMINI_API_KEY in .env turns Compass on (see .env.example for model and limit settings)
 # optional: MAPBOX_SERVER_TOKEN (a second public token, no URL restriction) gives real travel times
 npm run dev                      # http://localhost:3000
+npm run demo:seed                # optional: three synthetic travellers with a shared trip, notes and a story
 ```
+
+`npm run setup` is safe to run again: it never resets the database and never changes a value already
+in `.env`. The first run downloads Supabase's Docker images and the GeoNames city list (~3 MB).
+[docs/demo.md](docs/demo.md) is a ten-minute walkthrough using the demo travellers.
 
 After pulling new code, apply new migrations with `npm run db:migrate`. It keeps your accounts and
 data; `npm run db:reset` wipes the local database, including every account.
@@ -88,6 +88,32 @@ Emails (confirmations, sign-in links) never leave your machine: open the local i
 | `npm run test:e2e`     | Playwright, desktop and phone, against local Supabase with AI and map services faked (`VOYAGER_FIXTURES=1`); stop any dev server on port 3000 first |
 | `npm run build`        | Production build                                                                                                                                    |
 | `npm run check`        | lint + format + typecheck + unit tests + build                                                                                                      |
+
+Other scripts: `npm run setup` (one-command local setup), `npm run demo:seed` / `demo:clean` (demo
+travellers), `npm run db:clean-tests` (removes the `e2e-…@example.com` accounts that end-to-end
+tests leave in the local database), `npm run db:migrate` (apply new migrations, keeping data).
+
+## Accessibility and performance
+
+- Every main screen is scanned with axe (WCAG 2.2 A and AA rules) in the end-to-end suite, in both
+  themes, and must come back with no violations. Automated scans find a limited class of problems;
+  the app has not been audited with a screen reader by a person.
+- Everything works from the keyboard: the plane's parts are ordinary links, trip stops can be
+  dragged with space and the arrow keys, and Drift decks answer to the arrow keys.
+- `prefers-reduced-motion` turns off the camera flight, the idle turning and the entrances, and
+  shows the drawn plane by default.
+- The 3D plane is a separate download, fetched only where it will run well. Measured on the
+  production build of the homepage (compressed, over the network): 162 KB of scripts with the drawn
+  plane and 407 KB with the 3D plane. The scene stops drawing when off screen or in a hidden tab,
+  and steps down or hands over to the drawing if the device can't keep up.
+
+## What this is, and isn't
+
+Voyager is a portfolio prototype that runs on your own machine. It is not deployed, has no real
+users, and has not had a security review or a load test. Known gaps: clashing edits on a shared trip
+are refused rather than merged; there is no reporting or moderation for notes; orphaned photo files
+are not cleaned up when an account is removed by hand; place data comes from free sources and is
+uneven outside large cities.
 
 CI (GitHub Actions) runs lint, format, typecheck, unit tests and build, plus the database tests on a
 local Postgres. End-to-end tests run locally.

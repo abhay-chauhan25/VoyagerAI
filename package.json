@@ -24,7 +24,11 @@
     "db:types": "supabase gen types typescript --local > src/lib/supabase/database.types.ts",
     "check": "npm run lint && npm run format:check && npm run typecheck && npm run test && npm run build",
     "test:db": "supabase test db",
-    "data:cities": "node scripts/data/load-cities.mjs"
+    "data:cities": "node scripts/data/load-cities.mjs",
+    "setup": "npm install && node scripts/setup.mjs",
+    "demo:seed": "node scripts/demo/seed.mjs",
+    "demo:clean": "node scripts/dev/clean-test-accounts.mjs --demo && rm -f demo-accounts.local.txt",
+    "db:clean-tests": "node scripts/dev/clean-test-accounts.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "6.3.1",
@@ -45,6 +49,7 @@
     "zod": "4.6.7"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.14.0",
     "@playwright/test": "1.64.1",
     "@tailwindcss/postcss": "4.3.3",
     "@testing-library/jest-dom": "7.0.1",
@@ -69,6 +74,7 @@
   },
   "overrides": {
     "i18next": "26.5.3",
-    "zustand": "5.0.16"
+    "zustand": "5.0.16",
+    "axe-core": "4.14.0"
   }
 }

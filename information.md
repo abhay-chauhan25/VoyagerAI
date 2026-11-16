@@ -6,7 +6,8 @@ realistic day-by-day trips on a map, and lets friends plan those trips together.
 This file is the source of truth for product direction, architecture and the stage plan. Read it
 before proposing or implementing work. Update it when a decision changes.
 
-Status: portfolio-grade prototype, run locally. Not deployed, not production-hardened.
+Status: portfolio-grade prototype, run locally. All seven stages are complete. Not deployed, not
+production-hardened.
 
 ---
 

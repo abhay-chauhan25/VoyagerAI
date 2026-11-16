@@ -232,11 +232,36 @@ Consensus works from those, never from full Travel DNA weights.
 ## Design system
 
 Tokens in `src/app/globals.css` define roles, not colours: `bg`, `surface`, `ground`, `panel`, `ink`,
-`muted`, `accent`, `primary`, status colours, motion curves, and six travel hues (`hue-*`) that
+`muted`, `accent`, `primary`, `brass`, status colours, motion curves, and six travel hues (`hue-*`) that
 encode trip days, interest families and sections (`src/lib/hues.ts`). Dark mode redefines the same roles,
 either from the system preference or a saved choice (`data-theme` on `<html>`, applied before first
 paint by an inline script). Maps use Mapbox Standard and switch its light preset (day or night)
 with the theme, without reloading the style; Voyager's own layers read the same tokens.
+
+## The plane
+
+The 3D airliner is navigation, not decoration, so it is built to fail soft.
+
+- **One list** (`src/lib/boarding/sections.ts`) names each part, the section it opens, its hue, its
+  marker position and its camera poses. The live scene, the drawn cutaway, the manifest, the
+  sidebar locator and the homepage tour all read it.
+- **Built in code.** `src/lib/boarding/hull.ts` describes the fuselage as a function; windows,
+  doors, livery and the windscreen are placed with it. Wings and tail are lofted over aerofoil ribs
+  (`src/components/boarding/plane/geometry.ts`). No model or texture files are downloaded; the only
+  textures are small canvases drawn at start-up. The sky is a shader, and the paint reflects that
+  same sky.
+- **Links first.** Every marker is an ordinary link positioned over the canvas each frame, so the
+  keyboard, screen readers and tests use the same elements whichever way the plane is drawn. The
+  canvas itself is hidden from assistive technology.
+- **Choosing a stage** (`src/lib/boarding/stage.ts`): the drawn plane is server-rendered and shows
+  first. The 3D code is a separate chunk, loaded only when the browser reports WebGL 2, real
+  graphics hardware, enough memory and cores, no data-saver and no reduced-motion request. While
+  running, the scene measures its frame rate, steps down to lighter settings if it struggles, and
+  hands over to the drawing if it still can't keep up. It stops drawing when off screen or when the
+  tab is hidden. A traveller's own 3D/Drawing choice is kept in `localStorage`.
+- **Entering a section** (`src/components/boarding/boarding.tsx`): a provider in the app shell
+  starts the camera flight, prefetches the route, navigates after 780 ms and fades a cover that it
+  lifts when the new page is in place. Keyboard choices and reduced motion skip the flight.
 
 ## Configuration
 

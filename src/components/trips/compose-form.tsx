@@ -75,7 +75,7 @@ export function ComposeForm({ cities, initialCityId, defaultStart, defaultPace }
                 />
                 <span
                   aria-hidden="true"
-                  className="hue-fill flex size-10 shrink-0 items-center justify-center rounded-control font-display text-lead font-extrabold uppercase"
+                  className="hue-fill flex size-10 shrink-0 items-center justify-center rounded-control font-display text-lead font-bold uppercase"
                 >
                   {c.cityName.slice(0, 1)}
                 </span>

@@ -42,7 +42,7 @@ export function TripCard({ trip }: { trip: TripSummary }) {
             className="object-cover transition-transform duration-500 ease-[var(--ease-out)] motion-safe:group-hover:scale-[1.03]"
           />
         ) : (
-          <span className="absolute bottom-3 left-4 font-display text-[2rem] leading-none font-extrabold uppercase">
+          <span className="absolute bottom-3 left-4 font-display text-[2rem] leading-none font-bold uppercase">
             {trip.cityName}
           </span>
         )}

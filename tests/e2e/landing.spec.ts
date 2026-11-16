@@ -12,6 +12,29 @@ test.describe("landing page", () => {
     );
   });
 
+  test("walks through the plane: every part is introduced, with the drawn plane as the fallback", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    const tour = page.getByRole("region", { name: "A walk through the plane" });
+    for (const heading of [
+      "Compose a trip",
+      "Plan it together",
+      "Tell it your taste",
+      "Find places worth saving",
+      "Keep your map",
+      "Bring stories back",
+    ]) {
+      await expect(tour.getByRole("heading", { level: 3, name: heading })).toBeAttached();
+    }
+    // Before sign-in the markers point at chapters; they are not links into the app.
+    const parts = page.getByRole("list", { name: "Parts of the plane" });
+    await expect(parts.getByRole("button")).toHaveCount(6);
+    await expect(parts.getByRole("link")).toHaveCount(0);
+    await parts.getByRole("button", { name: "Huddle: Main cabin" }).click();
+    await expect(tour.getByRole("heading", { name: "Plan it together" })).toBeInViewport();
+  });
+
   test("reads a typed trip wish into a brief", async ({ page }) => {
     await page.goto("/");
     const wish = page.getByLabel("Describe a trip the way you'd tell a friend");

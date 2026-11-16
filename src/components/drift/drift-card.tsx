@@ -68,7 +68,7 @@ function Visual({ card, priority }: { card: Card; priority?: boolean }) {
       style={hueStyle(nameHue(card.name))}
       className="hue-fill flex h-full flex-col justify-end p-5"
     >
-      <span className="font-display text-[2.5rem] leading-[0.9] font-extrabold break-words uppercase">
+      <span className="font-display text-[2.5rem] leading-[0.9] font-bold break-words uppercase">
         {card.name}
       </span>
     </div>
@@ -180,7 +180,7 @@ export function DriftCardRow({ card, children }: { card: Card; children?: React.
         ) : (
           <span
             aria-hidden="true"
-            className="flex h-full items-end p-2 font-display text-[1.25rem] leading-none font-extrabold uppercase"
+            className="flex h-full items-end p-2 font-display text-[1.25rem] leading-none font-bold uppercase"
           >
             {card.name.slice(0, 2)}
           </span>

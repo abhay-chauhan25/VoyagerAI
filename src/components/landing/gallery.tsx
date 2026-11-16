@@ -17,7 +17,7 @@ export function Gallery() {
       <h2
         id="gallery-heading"
         data-reveal
-        className="relative z-10 text-center font-display text-[25vw] leading-[0.85] font-extrabold tracking-[-0.01em] text-ink uppercase md:text-[20vw] lg:text-[14vw]"
+        className="relative z-10 text-center font-display text-[25vw] leading-[0.85] font-bold tracking-[-0.01em] text-ink uppercase md:text-[20vw] lg:text-[14vw]"
       >
         Where
         <br />

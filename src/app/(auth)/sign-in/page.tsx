@@ -20,7 +20,7 @@ export default async function SignInPage({
   return (
     <div className="flex flex-col gap-8">
       <div className="flex flex-col gap-3">
-        <h1 className="font-display text-[2.75rem] leading-[0.9] font-extrabold uppercase">
+        <h1 className="font-display text-[2.75rem] leading-[0.9] font-bold uppercase">
           Welcome back
         </h1>
         <p className="text-lead text-muted">Your trips are where you left them.</p>

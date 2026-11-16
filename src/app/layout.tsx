@@ -1,12 +1,20 @@
 import type { Metadata, Viewport } from "next";
-import { Literata, Rokkitt } from "next/font/google";
+import { B612_Mono, Bodoni_Moda, Literata } from "next/font/google";
 import { ThemeScript } from "@/components/theme/theme-script";
 import "./globals.css";
 
-const rokkitt = Rokkitt({
+const bodoni = Bodoni_Moda({
   subsets: ["latin"],
-  weight: ["800"],
-  variable: "--font-rokkitt",
+  weight: ["500", "700"],
+  style: ["normal", "italic"],
+  variable: "--font-bodoni",
+  display: "swap",
+});
+
+const b612 = B612_Mono({
+  subsets: ["latin"],
+  weight: ["400", "700"],
+  variable: "--font-b612",
   display: "swap",
 });
 
@@ -26,14 +34,18 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#dfdedb" },
-    { media: "(prefers-color-scheme: dark)", color: "#12120f" },
+    { media: "(prefers-color-scheme: light)", color: "#f0e8da" },
+    { media: "(prefers-color-scheme: dark)", color: "#0d1326" },
   ],
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${rokkitt.variable} ${literata.variable}`} suppressHydrationWarning>
+    <html
+      lang="en"
+      className={`${bodoni.variable} ${literata.variable} ${b612.variable}`}
+      suppressHydrationWarning
+    >
       <head>
         <ThemeScript />
       </head>

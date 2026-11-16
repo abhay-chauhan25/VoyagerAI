@@ -28,26 +28,37 @@ Deliberately out of scope: booking (links out instead), generic social posting, 
 
 ## 2. Design direction
 
-Chosen with the taste-skill design process (direction "The split stage").
+Direction **"Boarding"**: Voyager is one flight. A live 3D airliner is the signature way around
+the app, and the homepage opens on the same plane in flight.
 
-- **Palette "Postcards"** (replaced "Stone and blueprint" when the owner found the app too plain): a
-  calm stone page (`#e2ded5`, panels a tone step off it, never white) by day and warm charcoal
-  (`#151513`) by night, so photos and the map carry the colour. Six travel hues (cobalt, sea,
-  vermilion, saffron, rose, moss) encode things, never decoration: each trip day (its chip, pins and
-  route match), each interest family, each section's mark in the navigation. Places without a photo
-  get a field of their own stable hue.
+- **The plane** (`/board`): built in code with Three.js and React Three Fiber, not loaded from a
+  model file. Each part opens a section: cockpit → Trips (Compose), main cabin → Huddle, rear galley
+  → Travel DNA, wing → Drift, tail fin → Atlas, hold → Field Notes. Pointing at a part turns that
+  stretch of skin to glass and lights the inside; choosing it flies the camera in, and the page opens
+  under a short cover. The sidebar stays for direct navigation and shows a small drawing of the
+  plane with the current part lit. Devices that can't run 3D smoothly, reduced motion and data-saver
+  get the same markers on a drawn cutaway; a 3D/Drawing switch remembers a traveller's own choice.
+- **Palette "Golden hour livery"** (replaced "Postcards" when the owner asked for a premium travel
+  look): warm paper (`#f0e8da`, panels a tone step off it, never white) by day and dusk navy
+  (`#0d1326`) by night, with dusk-navy ink. Six travel hues (cobalt, sea, vermilion, saffron, rose,
+  moss) encode things, never decoration: each trip day (its chip, pins and route match), each
+  interest family, and each section together with its part of the plane. They are also the stripes
+  on the tail. Brass is the livery's one decorative line.
 - **Maps**: Mapbox Standard, lit as day or night to follow the theme, with stars around the globe.
-- **Type**: Rokkitt 800 (slab capitals) for display and the wordmark — luggage tags, departure boards;
-  Literata for all text, including the app UI.
-- **Public pages** (landing, auth): square corners, one accent action, real photographs of the
-  sample destination (openly licensed, credited in the footer), product fragments built in HTML.
+- **Type**: Bodoni Moda for display and the wordmark; Literata for all text, including the app UI;
+  B612 Mono (drawn for aircraft cockpit displays) for the codes printed on passes.
+- **Public pages**: the homepage is the plane over a cloud deck with the headline, then a pinned
+  walk through its parts, then real photographs of the sample destination (openly licensed, credited
+  in the footer) and product fragments built in HTML.
 - **App screens**: open-plane shell (labelled sidebar on desktop, bottom tabs on phones), neutral
-  active state, accent reserved for data and at most one control, near-black primary button, honest
-  empty states that keep their frame.
-- **Motion**: strong ease-out curves, 140–240 ms for UI responses, press feedback at scale 0.97,
-  section entrances, one slow photographic crossfade. In the app: Drift cards tilt on a spring with
-  the next card rising underneath, trip routes draw themselves in, pins lift when their stop is
-  pointed at, and the idle Atlas globe turns slowly. Everything respects `prefers-reduced-motion`.
+  active state, accent reserved for data and at most one control, dusk-navy primary button, honest
+  empty states that keep their frame. Boarding-pass rows (a ticket with a perforated stub) list the
+  parts of the plane; Huddle shows each trip's travellers as a row of seats.
+- **Motion**: strong ease-out curves, 140–240 ms for UI responses, press feedback at scale 0.97.
+  The one long movement is the camera flying into a part of the plane (under a second, mouse and
+  touch only; keyboard choices open at once). Drift cards tilt on a spring, trip routes draw
+  themselves in, pins lift when their stop is pointed at, and the idle Atlas globe turns slowly.
+  Everything respects `prefers-reduced-motion`.
 
 Tokens live in `src/app/globals.css`; components reference roles (`bg`, `ink`, `accent`…), never hex.
 
@@ -115,15 +126,15 @@ Principles:
 
 Each stage ends with checks passing, one commit, a push and a report, then waits for approval.
 
-| #   | Stage                        | Outcome                                                                                                                                                                                                                                    |
-| --- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 1   | **Foundation**               | Next.js + TypeScript, design system, local Supabase, email/password + magic-link auth, profiles with RLS, app shell, landing page, lint/format/typecheck/unit/e2e/DB tests, CI.                                                            |
-| 2   | **Travel DNA + Atlas**       | Swipe-based taste onboarding, editable profile and preferences, interactive Mapbox world map of visited places, public profile page.                                                                                                       |
-| 3   | **Drift + Compass AI layer** | Gemini-backed destination/activity cards grounded in free place data (GeoNames, OpenStreetMap, Wikivoyage, Commons photos), swipe deck, natural-language search on a globe, saves. Schema validation, fallbacks, caching, per-user quotas. |
-| 4   | **Trip Canvas + Compose**    | Trips, day timeline linked to the map, drag and drop, AI-composed itineraries using real travel times, budget and pace meters, accept/reject proposals. **MVP complete.**                                                                  |
-| 5   | **Huddle**                   | Invites and roles, live co-editing with presence, Group Drift, voting, Consensus planning.                                                                                                                                                 |
-| 6   | **Field Notes**              | Follows, reviews, ratings, photo uploads, feed, Fork-a-trip, AI-drafted trip stories.                                                                                                                                                      |
-| 7   | **Polish**                   | Accessibility and performance passes, full end-to-end coverage, demo seed data, docs, one-command local setup. No deployment.                                                                                                              |
+| #   | Stage                        | Outcome                                                                                                                                                                                                                                            |
+| --- | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **Foundation**               | Next.js + TypeScript, design system, local Supabase, email/password + magic-link auth, profiles with RLS, app shell, landing page, lint/format/typecheck/unit/e2e/DB tests, CI.                                                                    |
+| 2   | **Travel DNA + Atlas**       | Swipe-based taste onboarding, editable profile and preferences, interactive Mapbox world map of visited places, public profile page.                                                                                                               |
+| 3   | **Drift + Compass AI layer** | Gemini-backed destination/activity cards grounded in free place data (GeoNames, OpenStreetMap, Wikivoyage, Commons photos), swipe deck, natural-language search on a globe, saves. Schema validation, fallbacks, caching, per-user quotas.         |
+| 4   | **Trip Canvas + Compose**    | Trips, day timeline linked to the map, drag and drop, AI-composed itineraries using real travel times, budget and pace meters, accept/reject proposals. **MVP complete.**                                                                          |
+| 5   | **Huddle**                   | Invites and roles, live co-editing with presence, Group Drift, voting, Consensus planning.                                                                                                                                                         |
+| 6   | **Field Notes**              | Follows, reviews, ratings, photo uploads, feed, Fork-a-trip, AI-drafted trip stories.                                                                                                                                                              |
+| 7   | **Polish**                   | Design half done early at the owner's request (the plane, the homepage, the "Golden hour livery" system). Remaining: accessibility and performance passes, full end-to-end coverage, demo seed data, docs, one-command local setup. No deployment. |
 
 **MVP**: sign up → build Travel DNA → swipe and save in Drift → Compose a trip → view and edit it on
 the map. Working at the end of Stage 4.

@@ -16,7 +16,7 @@ export function FirstTripCta() {
       >
         <h2
           id="cta-heading"
-          className="font-display text-[13vw] leading-[0.92] font-extrabold uppercase sm:text-display"
+          className="font-display text-[13vw] leading-[0.92] font-bold uppercase sm:text-display"
         >
           Name your
           <br />

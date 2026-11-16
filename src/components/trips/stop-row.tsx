@@ -275,7 +275,7 @@ export function StopRow({
           ) : (
             <span
               aria-hidden="true"
-              className="absolute bottom-1.5 left-2 font-display text-lead leading-none font-extrabold uppercase"
+              className="absolute bottom-1.5 left-2 font-display text-lead leading-none font-bold uppercase"
             >
               {stop.name.slice(0, 2)}
             </span>

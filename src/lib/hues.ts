@@ -43,9 +43,11 @@ export const INTEREST_HUE: Record<Interest, Hue> = {
 
 /** Each main section's mark in the navigation. */
 export const SECTION_HUE: Record<string, Hue> = {
+  "/board": "cobalt",
   "/drift": "vermilion",
   "/trips": "cobalt",
-  "/atlas": "sea",
+  "/huddle": "sea",
+  "/atlas": "moss",
   "/notes": "saffron",
   "/dna": "rose",
 };

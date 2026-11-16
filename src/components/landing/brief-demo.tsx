@@ -7,7 +7,7 @@ const EXAMPLE =
   "Three slow days in Lisbon in May, mostly food and viewpoints, about €600 each, four of us";
 const MAX_LENGTH = 280;
 const HALF_HEADING =
-  "pointer-events-none font-display text-[11vw] leading-none font-extrabold uppercase sm:text-display";
+  "pointer-events-none font-display text-[11vw] leading-none font-bold uppercase sm:text-display";
 
 function Row({ label, value }: { label: string; value: React.ReactNode | null }) {
   return (

@@ -75,3 +75,21 @@ export function DnaIcon(props: IconProps) {
     </Svg>
   );
 }
+
+export function PlaneIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M14 2 9.2 6.8 3 5.2l-1 1 5 2.6-2.2 2.4-1.9-.3-.7.7 2.5 1.1 1.1 2.5.7-.7-.3-1.9L8.6 10.4l2.6 5 1-1-1.6-6.2L14 4.4a1.7 1.7 0 0 0 0-2.4Z" />
+    </Svg>
+  );
+}
+
+export function HuddleIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <circle cx="5.5" cy="5.5" r="2" />
+      <circle cx="11.2" cy="6.2" r="1.6" />
+      <path d="M1.8 13.2a3.7 3.7 0 0 1 7.4 0M9.6 10a3 3 0 0 1 4.6 2.6" />
+    </Svg>
+  );
+}

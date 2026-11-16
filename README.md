@@ -35,8 +35,14 @@ product blueprint and stage plan, and [`docs/architecture.md`](docs/architecture
   everyone; places all swipers loved become matches that can be voted on and added. **Consensus**
   drafts a plan balancing everyone's top interests at the slowest member's pace, explains the
   trade-offs, and goes to a vote like any proposal. Owners manage roles; viewers swipe and vote.
-- App shell with Field Notes (empty state for now), day/night/auto theme in the "Postcards" palette,
-  maps on Mapbox Standard lit for day or night.
+- **The plane**: an interactive 3D airliner (Three.js, built in code) is the way around the app.
+  Each part opens a section: cockpit → Trips, main cabin → Huddle, rear galley → Travel DNA, wing →
+  Drift, tail fin → Atlas, hold → Field Notes. Drag to look around, point at a part to see inside
+  it, choose it to fly in. The sidebar still goes anywhere directly. Where 3D can't run smoothly
+  (or reduced motion is on) the same links sit on a drawn plane, and a switch lets you pick either.
+  The homepage opens on the same plane and walks through its parts as you scroll.
+- App shell with Field Notes (empty state for now), day/night/auto theme in the "Golden hour livery"
+  palette, maps on Mapbox Standard lit for day or night.
 
 ## Requirements
 

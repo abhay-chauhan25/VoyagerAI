@@ -23,7 +23,7 @@ export default async function CheckEmailPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="font-display text-[2.75rem] leading-[0.9] font-extrabold uppercase">
+      <h1 className="font-display text-[2.75rem] leading-[0.9] font-bold uppercase">
         Check your email
       </h1>
       <p className="text-lead">

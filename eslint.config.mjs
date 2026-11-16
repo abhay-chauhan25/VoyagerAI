@@ -16,6 +16,13 @@ const config = [
     rules: { "no-console": "off" },
   },
   {
+    // The 3D scene is drawn by changing Three.js objects (materials, the camera, marker positions)
+    // every frame, outside React's render. That is how a render loop works, and it is exactly what
+    // this rule exists to forbid in ordinary components.
+    files: ["src/components/boarding/plane/**/*.tsx"],
+    rules: { "react-hooks/immutability": "off" },
+  },
+  {
     ignores: [
       ".next/**",
       "node_modules/**",

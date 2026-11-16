@@ -2,9 +2,10 @@
 
 /*
  * Voyager design tokens.
- * Palette "Postcards": the page is a calm stone (day) or warm charcoal (night) so that photos and
- * the map carry the colour. Six travel hues encode things, never decoration: each trip day has one
- * (its chip, pins and route match), each interest family has one, and each section has a mark.
+ * Palette "Golden hour livery": the page is warm paper by day and dusk navy by night, the colours
+ * of a cabin in late light. Six travel hues encode things, never decoration: each trip day has one
+ * (its chip, pins and route match), each interest family has one, and each section of the app (and
+ * the part of the plane that opens it) has one. Brass is the livery's one decorative line.
  * Components reference roles only (bg, surface, ink, muted, accent, hue-*), never raw hex values.
  */
 
@@ -13,30 +14,32 @@
 :root {
   color-scheme: light;
 
-  /* Grounds and surfaces: each a tone step from the next, never white on grey */
-  --bg: #e4e0d7; /* public page paper */
-  --surface: #d6d1c6; /* a field one step darker than the page */
-  --ground: #e2ded5; /* app canvas */
-  --panel: #eeeae3; /* app panels, inputs */
-  --raised: #e8e4dc;
-  --active: #d6d1c6; /* selected nav row */
+  /* Grounds and surfaces: warm paper, each a tone step from the next, never white */
+  --bg: #f1e9db; /* public page paper */
+  --surface: #e6dccb; /* a field one step darker than the page */
+  --ground: #f0e8da; /* app canvas */
+  --panel: #f8f2e7; /* app panels, inputs */
+  --raised: #ebe2d2;
+  --active: #e2d7c4; /* selected nav row */
 
   /* Lines (app screens only) */
-  --border: #cfcabf;
-  --rule: #dcd7cd;
-  --control: #a29d92;
+  --border: #d8ccb8;
+  --rule: #e3d9c7;
+  --control: #9a8e77;
 
-  /* Text */
-  --ink: #24221c;
-  --muted: #57544b;
+  /* Text: dusk navy ink on paper */
+  --ink: #1a2138;
+  --muted: #535869;
 
   /* Action and data */
-  --accent: #2456d6;
-  --accent-hover: #1d48b8;
+  --accent: #1f5fc0;
+  --accent-hover: #184e9f;
   --accent-ink: #ffffff;
-  --primary: #24221c;
-  --primary-hover: #38362e;
-  --primary-ink: #eeeae3;
+  --primary: #1a2138;
+  --primary-hover: #2a3352;
+  --primary-ink: #f8f2e7;
+  /* Brass: the livery's cheatline. Decoration only, never text. */
+  --brass: #b88a2e;
 
   /* The six travel hues, text-safe (4.5:1) on --panel, with the ink that sits on a fill of each */
   --hue-cobalt: #2456d6;
@@ -52,14 +55,26 @@
   /* Status (text-safe at 4.5:1 on --panel) */
   --positive: #1f6b45;
   --negative: #a8261d;
-  --negative-bg: #f3dfda;
+  --negative-bg: #f6ddd4;
   --warning: #835f00;
-  --warning-bg: #f1e4c4;
+  --warning-bg: #f3e4bd;
 
   /* Inverted field for the dark half of split sections */
-  --night: #1b1a15;
-  --night-ink: #ecebe6;
-  --night-muted: #b4b2a9;
+  --night: #0c1226;
+  --night-ink: #f0ead9;
+  --night-muted: #b3b8cc;
+
+  /* The sky behind the plane, and the drawn plane's paint */
+  --sky-top: #2f6fc6;
+  --sky-mid: #a9cbec;
+  --sky-low: #f6d7ae;
+  --sky-below: #8fb0d6;
+  --plane-paint: #fbf7ee;
+  --plane-wing: #dcd9d1;
+  --plane-shade: #b9bcc6;
+  --plane-dusk: #16233f;
+  --plane-glass: #1b2437;
+  --plane-brass: #c99a3c;
 
   /* Motion: strong ease-out for responses, ease-in-out for on-screen movement */
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
@@ -70,84 +85,106 @@
   --dur-base: 240ms;
 
   /* Shape: app screens use one tight radius family; the public pages are square */
-  --radius-card: 6px;
-  --radius-control: 4px;
+  --radius-card: 10px;
+  --radius-control: 6px;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     color-scheme: dark;
-    --bg: #151513;
-    --surface: #1d1c1a;
-    --ground: #151513;
-    --panel: #201f1c;
-    --raised: #282723;
-    --active: #302f2a;
-    --border: #2f2e2a;
-    --rule: #262522;
-    --control: #5a5850;
-    --ink: #eeede8;
-    --muted: #b3b0a6;
-    --accent: #7d9dff;
-    --accent-hover: #9ab3ff;
-    --accent-ink: #0d1020;
-    --primary: #eeede8;
+    --bg: #0d1326;
+    --surface: #141b34;
+    --ground: #0d1326;
+    --panel: #161e3a;
+    --raised: #1c2545;
+    --active: #243056;
+    --border: #2a3560;
+    --rule: #1e2749;
+    --control: #6672a0;
+    --ink: #f0ead9;
+    --muted: #aeb4cb;
+    --accent: #8fb0ff;
+    --accent-hover: #abc4ff;
+    --accent-ink: #0b1026;
+    --primary: #f0ead9;
     --primary-hover: #ffffff;
-    --primary-ink: #151513;
-    --hue-cobalt: #7d9dff;
+    --primary-ink: #0d1326;
+    --brass: #d9ad55;
+    --hue-cobalt: #8fb0ff;
     --hue-sea: #4cc3bf;
     --hue-vermilion: #ff8a5c;
     --hue-saffron: #f2c14e;
     --hue-rose: #f27aa8;
     --hue-moss: #9acd6b;
-    --on-hue: #12110f;
-    --tint: 22%;
+    --on-hue: #0b1026;
+    --tint: 24%;
     --positive: #5cc48a;
     --negative: #f2786e;
-    --negative-bg: #2c1a18;
+    --negative-bg: #2e1a22;
     --warning: #f2c14e;
-    --warning-bg: #2d2615;
-    --night: #08080a;
-    --night-ink: #ecebe6;
-    --night-muted: #b0aea5;
+    --warning-bg: #2c2718;
+    --night: #070b1c;
+    --night-ink: #f0ead9;
+    --night-muted: #aeb4cb;
+    --sky-top: #0a1336;
+    --sky-mid: #2c3a74;
+    --sky-low: #c9744a;
+    --sky-below: #0b1029;
+    --plane-paint: #d9d6dc;
+    --plane-wing: #9aa0b8;
+    --plane-shade: #5d6488;
+    --plane-dusk: #0d1530;
+    --plane-glass: #ffcf87;
+    --plane-brass: #d9ad55;
   }
 }
 
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --bg: #151513;
-  --surface: #1d1c1a;
-  --ground: #151513;
-  --panel: #201f1c;
-  --raised: #282723;
-  --active: #302f2a;
-  --border: #2f2e2a;
-  --rule: #262522;
-  --control: #5a5850;
-  --ink: #eeede8;
-  --muted: #b3b0a6;
-  --accent: #7d9dff;
-  --accent-hover: #9ab3ff;
-  --accent-ink: #0d1020;
-  --primary: #eeede8;
+  --bg: #0d1326;
+  --surface: #141b34;
+  --ground: #0d1326;
+  --panel: #161e3a;
+  --raised: #1c2545;
+  --active: #243056;
+  --border: #2a3560;
+  --rule: #1e2749;
+  --control: #6672a0;
+  --ink: #f0ead9;
+  --muted: #aeb4cb;
+  --accent: #8fb0ff;
+  --accent-hover: #abc4ff;
+  --accent-ink: #0b1026;
+  --primary: #f0ead9;
   --primary-hover: #ffffff;
-  --primary-ink: #151513;
-  --hue-cobalt: #7d9dff;
+  --primary-ink: #0d1326;
+  --brass: #d9ad55;
+  --hue-cobalt: #8fb0ff;
   --hue-sea: #4cc3bf;
   --hue-vermilion: #ff8a5c;
   --hue-saffron: #f2c14e;
   --hue-rose: #f27aa8;
   --hue-moss: #9acd6b;
-  --on-hue: #12110f;
-  --tint: 22%;
+  --on-hue: #0b1026;
+  --tint: 24%;
   --positive: #5cc48a;
   --negative: #f2786e;
-  --negative-bg: #2c1a18;
+  --negative-bg: #2e1a22;
   --warning: #f2c14e;
-  --warning-bg: #2d2615;
-  --night: #08080a;
-  --night-ink: #ecebe6;
-  --night-muted: #b0aea5;
+  --warning-bg: #2c2718;
+  --night: #070b1c;
+  --night-ink: #f0ead9;
+  --night-muted: #aeb4cb;
+  --sky-top: #0a1336;
+  --sky-mid: #2c3a74;
+  --sky-low: #c9744a;
+  --sky-below: #0b1029;
+  --plane-paint: #d9d6dc;
+  --plane-wing: #9aa0b8;
+  --plane-shade: #5d6488;
+  --plane-dusk: #0d1530;
+  --plane-glass: #ffcf87;
+  --plane-brass: #d9ad55;
 }
 
 @theme inline {
@@ -174,12 +211,15 @@
   --color-warning: var(--warning);
   --color-warning-bg: var(--warning-bg);
   --color-on-hue: var(--on-hue);
+  --color-brass: var(--brass);
   --color-night: var(--night);
   --color-night-ink: var(--night-ink);
   --color-night-muted: var(--night-muted);
 
-  --font-display: var(--font-rokkitt), "Rockwell", "Roboto Slab", serif;
+  --font-display: var(--font-bodoni), "Bodoni 72", "Didot", serif;
   --font-text: var(--font-literata), "Iowan Old Style", Georgia, serif;
+  /* Codes and figures printed on passes: gate, seat, three-letter codes. */
+  --font-mono: var(--font-b612), ui-monospace, "SF Mono", Menlo, monospace;
 
   /* App type scale: 13 / 14 / 16 / 18 / 24 */
   --text-meta: 0.8125rem;
@@ -216,6 +256,11 @@
     font-size: 1rem;
     line-height: 1.55;
     -webkit-font-smoothing: antialiased;
+  }
+
+  html {
+    scrollbar-color: var(--control) transparent;
+    caret-color: var(--accent);
   }
 
   ::selection {
@@ -285,6 +330,145 @@
   }
 }
 
+/*
+ * The plane. The sky is drawn in CSS in the same colours as the live scene, so the page looks the
+ * same before the 3D has loaded, and on devices that show the drawn plane instead.
+ */
+.plane-sky {
+  container-type: size;
+  background:
+    radial-gradient(
+      120% 60% at 18% 64%,
+      color-mix(in oklab, var(--sky-low) 80%, transparent),
+      transparent 70%
+    ),
+    linear-gradient(
+      to bottom,
+      var(--sky-top) 0%,
+      var(--sky-mid) 46%,
+      color-mix(in oklab, var(--sky-low) 55%, var(--sky-mid)) 62%,
+      var(--sky-below) 100%
+    );
+}
+.plane-flat {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: min(94cqw, 215cqh);
+  aspect-ratio: 5 / 2;
+  transform: translate(
+    calc(-50% + var(--plane-x, 0) * 100cqw),
+    calc(-50% + var(--plane-y, 0) * 100cqh)
+  );
+  transition: transform 600ms var(--ease-in-out);
+}
+
+/* A marker is pinned by its dot; the tag opens beside it when the part is pointed at. */
+.plane-marker {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin: -22px 0 0 -22px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.plane-pin {
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 6px rgb(10 16 40 / 0.45);
+  transition: transform var(--dur-quick) var(--ease-out);
+}
+.plane-pin[data-active="true"] {
+  transform: scale(1.5);
+}
+.plane-tag {
+  position: absolute;
+  left: 34px;
+  top: 50%;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 8px 14px 9px 12px;
+  white-space: nowrap;
+  text-align: left;
+  color: var(--ink);
+  background: var(--panel);
+  border-radius: var(--radius-control);
+  box-shadow:
+    inset 3px 0 0 var(--hue),
+    0 6px 20px -6px rgb(10 16 40 / 0.4);
+  opacity: 0;
+  transform: translate(-6px, -50%) scale(0.97);
+  transform-origin: left center;
+  pointer-events: none;
+  transition:
+    opacity var(--dur-quick) var(--ease-out),
+    transform var(--dur-quick) var(--ease-out);
+}
+.plane-tag[data-active="true"] {
+  opacity: 1;
+  transform: translate(0, -50%) scale(1);
+}
+
+/* The cover that carries a traveller from the plane into a section. */
+.boarding-cover {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  background: var(--ground);
+  color: var(--ink);
+  opacity: 0;
+  pointer-events: none;
+  /* Leaving: quick, so the new page is never held back. */
+  transition: opacity 260ms var(--ease-out);
+}
+.boarding-cover[data-open="true"] {
+  opacity: 1;
+  pointer-events: auto;
+  /* Arriving: waits for the camera to close in, then fades up. */
+  transition: opacity 340ms var(--ease-in-out) 420ms;
+}
+
+/* A boarding pass: a ticket with a perforated stub. */
+.pass {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  background: var(--panel);
+  border-radius: var(--radius-card);
+  transition:
+    background-color var(--dur-quick) ease,
+    transform var(--dur-press) var(--ease-out);
+}
+.pass-stub {
+  display: grid;
+  place-items: center;
+  min-width: 4.25rem;
+  padding: 0.75rem 0.5rem;
+  border-right: 1.5px dashed var(--border);
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  letter-spacing: 0.12em;
+  color: var(--hue);
+}
+@media (hover: hover) and (pointer: fine) {
+  .pass:hover {
+    background: var(--raised);
+  }
+}
+.pass:active {
+  transform: scale(0.985);
+}
+.pass[data-active="true"] {
+  background: color-mix(in oklab, var(--hue) var(--tint), var(--panel));
+}
+
 /* Trip pins: numbered, in their day's hue. They lift when their stop is pointed at anywhere. */
 .trip-pin {
   display: grid;
@@ -332,5 +516,21 @@ html .mapboxgl-touch-pan-blocker {
   .reveal-armed [data-reveal] {
     transform: none;
     transition: opacity 200ms ease;
+  }
+  .plane-tag,
+  .plane-tag[data-active="true"] {
+    transform: translate(0, -50%);
+  }
+  .plane-pin[data-active="true"] {
+    transform: none;
+    outline: 2px solid var(--ink);
+    outline-offset: 2px;
+  }
+  .boarding-cover,
+  .boarding-cover[data-open="true"] {
+    transition: opacity 120ms ease;
+  }
+  .pass:active {
+    transform: none;
   }
 }

@@ -4,6 +4,8 @@ export const SIGN_IN_PATH = "/sign-in";
 export const ONBOARDING_PATH = "/welcome";
 
 const PROTECTED_PREFIXES = [
+  "/board",
+  "/huddle",
   "/drift",
   "/trips",
   "/atlas",

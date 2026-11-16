@@ -31,6 +31,7 @@
     "@dnd-kit/sortable": "10.0.0",
     "@dnd-kit/utilities": "3.2.2",
     "@google/genai": "2.30.0",
+    "@react-three/fiber": "9.8.2",
     "@supabase/ssr": "0.12.7",
     "@supabase/supabase-js": "2.118.0",
     "mapbox-gl": "3.33.0",
@@ -40,6 +41,7 @@
     "react": "19.1.10",
     "react-dom": "19.1.10",
     "server-only": "0.0.1",
+    "three": "0.187.0",
     "zod": "4.6.7"
   },
   "devDependencies": {
@@ -52,6 +54,7 @@
     "@types/node": "26.6.5",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
+    "@types/three": "0.187.0",
     "@vitejs/plugin-react": "6.1.2",
     "eslint": "10.13.0",
     "eslint-config-next": "16.4.2",
@@ -65,6 +68,7 @@
     "vitest": "4.1.12"
   },
   "overrides": {
-    "i18next": "26.5.3"
+    "i18next": "26.5.3",
+    "zustand": "5.0.16"
   }
 }

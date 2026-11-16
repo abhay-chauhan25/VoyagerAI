@@ -79,7 +79,7 @@ export const proposalAnswerSchema = z.object({
         reason: z.string().min(1).max(200),
       }),
     )
-    .max(8),
+    .max(12),
 });
 export type ProposalAnswer = z.infer<typeof proposalAnswerSchema>;
 
@@ -100,7 +100,7 @@ export function repairProposal(json: unknown): unknown {
   });
   return {
     summary: typeof json.summary === "string" ? json.summary.trim().slice(0, 240) : json.summary,
-    changes: changes.slice(0, 8),
+    changes: changes.slice(0, 12),
   };
 }
 
@@ -137,12 +137,13 @@ export function proposalPrompt(profile: string, plan: Plan, request: string) {
       "The traveller wants to change their trip. Propose changes using only these actions:",
       "- move: move stop `stop` to day `day`;",
       "- remove: remove stop `stop` from the trip;",
-      "- add: add saved place `save` to day `day`.",
-      "Use the ids exactly as given; days are numbered from 1. Propose at most 8 changes, the fewest that do the job.",
+      "- add: add place `save` from the list of places that can be added to day `day`.",
+      "When asked to add places or fill the days, add several from that list, spread over the days with the fewest stops, and include places to eat when asked. A day holds at most 12 stops.",
+      "Use the ids exactly as given; days are numbered from 1. Propose at most 12 changes, the fewest that do the job.",
       "Each reason is one sentence of at most 20 words. 'summary' is one sentence describing the change as a whole.",
       "If the request cannot be met with these actions, return no changes and say why in 'summary'.",
     ].join("\n"),
-    user: `Traveller:\n${profile}\n\nThe trip:\n${asData("trip", days, 4000)}\n\nSaved places not in the trip:\n${asData("saved", spares, 3000)}\n\nTheir request:\n${asData("request", request, 300)}`,
+    user: `Traveller:\n${profile}\n\nThe trip:\n${asData("trip", days, 4000)}\n\nPlaces that can be added (the traveller's saved places, then suggestions for this city):\n${asData("saved", spares, 3000)}\n\nTheir request:\n${asData("request", request, 300)}`,
     maxOutputTokens: 1024,
     repair: repairProposal,
   };

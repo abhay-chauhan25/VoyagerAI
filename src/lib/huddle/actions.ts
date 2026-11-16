@@ -135,6 +135,34 @@ export async function inviteByHandle(input: unknown): Promise<HuddleResult> {
   };
 }
 
+const friendInput = z.object({
+  tripId: z.uuid(),
+  friendId: z.uuid(),
+  role: z.enum(INVITE_ROLES),
+});
+
+/** Invites one of the owner's friends to the trip. The database checks they really are friends. */
+export async function inviteFriend(input: unknown): Promise<HuddleResult> {
+  const parsed = friendInput.safeParse(input);
+  if (!parsed.success) return FAILED;
+  const ctx = await withTrip(parsed.data.tripId);
+  if (!ctx) return NOT_FOUND;
+  if (ctx.trip.role !== "owner") return OWNER_ONLY;
+  const { error } = await ctx.supabase.rpc("invite_friend", {
+    p_trip: ctx.trip.id,
+    p_friend: parsed.data.friendId,
+    p_role: parsed.data.role,
+  });
+  if (error) {
+    if (error.code === "42501")
+      return { ok: false, message: "You can only invite people you're friends with this way." };
+    console.error("Inviting a friend failed", { code: error.code });
+    return FAILED;
+  }
+  refresh(ctx.trip.id);
+  return { ok: true, message: "Invited. They'll find the invitation on their Trips page." };
+}
+
 const respondInput = z.object({ inviteId: z.uuid(), accept: z.boolean() });
 
 export async function respondToInvitation(input: unknown): Promise<HuddleResult> {

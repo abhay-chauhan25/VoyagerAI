@@ -81,6 +81,11 @@ export default async function HuddlePage() {
       <ScreenHeader
         title="Huddle"
         subline="Trips you're planning with other people: swipe the same places, vote, and agree a plan."
+        action={
+          <Link href="/friends" className="text-ui font-semibold underline underline-offset-4">
+            Your friends
+          </Link>
+        }
       />
 
       {invitations.length > 0 ? <Invitations invitations={invitations} /> : null}

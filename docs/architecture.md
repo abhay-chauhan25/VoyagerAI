@@ -216,6 +216,17 @@ Consensus works from those, never from full Travel DNA weights.
   and a plain template when Compass is off, over its limit or fails. Nothing is saved until the
   owner presses Publish.
 
+## Friends and contact details
+
+- **Friends are mutual follows**; there is no separate table. Only public profiles can be followed,
+  with one exception: you can always follow back someone who follows you.
+- **Contact details** live in `profile_contacts`, readable only by their owner. Everyone else calls
+  `profile_contact(user)`, which returns each field only when its owner's setting (hidden, friends,
+  followers, any signed-in traveller) covers the caller. Visitors can't call it at all.
+- **A proposal carries the places it suggests** (`proposals.places`). When asked to add to a trip,
+  Compass may choose from real places in the city that the traveller hasn't saved; accepting the
+  proposal adds exactly the place that was shown.
+
 ## Database security
 
 | Table           | Owner                                             | Others signed in | Visitors       |

@@ -115,13 +115,14 @@ export async function loadGroupSwipes(supabase: Client, tripId: string): Promise
 }
 
 /**
- * Places that can be added to a shared trip: the caller's own saves in the city, plus every place
- * a member loved in Group Drift. One entry per place.
+ * Places that can be added to a trip: the caller's own saves in the city, every place a member
+ * loved in Group Drift, and places Compass suggested in a proposal still waiting for an answer.
+ * One entry per place.
  */
 export async function loadPool(
   supabase: Client,
   userId: string,
-  trip: { id: string; cityId: number },
+  trip: { id: string; cityId: number; proposals?: readonly { places: readonly ActivityCard[] }[] },
 ): Promise<ActivityCard[]> {
   const [saves, swipes] = await Promise.all([
     loadCitySaves(supabase, userId, trip.cityId),
@@ -131,6 +132,11 @@ export async function loadPool(
   for (const swipe of swipes) {
     if (swipe.verdict !== "pass" && !pool.has(swipe.sourceKey))
       pool.set(swipe.sourceKey, swipe.card);
+  }
+  for (const proposal of trip.proposals ?? []) {
+    for (const place of proposal.places) {
+      if (!pool.has(place.sourceKey)) pool.set(place.sourceKey, place);
+    }
   }
   return [...pool.values()];
 }

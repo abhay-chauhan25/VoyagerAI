@@ -8,6 +8,8 @@ export type PublicProfile = {
   homeCity: string | null;
   handle: string;
   isPublic: boolean;
+  bio: string | null;
+  website: string | null;
 };
 
 /**
@@ -21,7 +23,7 @@ export const findProfileByHandle = cache(
     const supabase = await createClient();
     const { data, error } = await supabase
       .from("profiles")
-      .select("id, display_name, home_city, handle, is_public")
+      .select("id, display_name, home_city, handle, is_public, bio, website")
       .eq("handle", handle)
       .maybeSingle();
     if (error) throw new Error(`Could not load profile (${error.code})`);
@@ -32,6 +34,8 @@ export const findProfileByHandle = cache(
       homeCity: data.home_city,
       handle: data.handle,
       isPublic: data.is_public,
+      bio: data.bio,
+      website: data.website,
     };
   },
 );

@@ -1,10 +1,10 @@
-import Image from "next/image";
 import Link from "next/link";
 import { countryName } from "@/lib/atlas/countries";
 import type { Card } from "@/lib/drift/cards";
 import { INTEREST_HUE, hueStyle, nameHue } from "@/lib/hues";
 import type { Interest } from "@/lib/interests";
 import type { Photo } from "@/lib/places/types";
+import { CardPhoto } from "./card-photo";
 
 function place(card: Card): string {
   if (card.kind === "activity") return `${card.category} · ${card.cityName}`;
@@ -47,23 +47,9 @@ export function PhotoCredit({ photo }: { photo: Photo }) {
 }
 
 function Visual({ card, priority }: { card: Card; priority?: boolean }) {
-  if (card.photo) {
-    return (
-      <Image
-        src={card.photo.url}
-        unoptimized
-        alt={`${card.name}, ${place(card)}`}
-        fill
-        priority={priority}
-        draggable={false}
-        sizes="(min-width: 640px) 24rem, 92vw"
-        className="pointer-events-none object-cover"
-      />
-    );
-  }
-  // No freely licensed photo exists for it: set the name in type on a field of the place's own
-  // colour (stable per name) rather than show a stand-in picture.
-  return (
+  // No freely licensed photo exists for it (or it wouldn't load): set the name in type on a field
+  // of the place's own colour (stable per name) rather than show a stand-in picture.
+  const named = (
     <div
       style={hueStyle(nameHue(card.name))}
       className="hue-fill flex h-full flex-col justify-end p-5"
@@ -72,6 +58,16 @@ function Visual({ card, priority }: { card: Card; priority?: boolean }) {
         {card.name}
       </span>
     </div>
+  );
+  if (!card.photo) return named;
+  return (
+    <CardPhoto
+      src={card.photo.url}
+      alt={`${card.name}, ${place(card)}`}
+      sizes="(min-width: 640px) 24rem, 92vw"
+      priority={priority}
+      fallback={named}
+    />
   );
 }
 
@@ -169,13 +165,18 @@ export function DriftCardRow({ card, children }: { card: Card; children?: React.
         className="hue-fill relative size-20 shrink-0 overflow-hidden rounded-control"
       >
         {card.photo ? (
-          <Image
+          <CardPhoto
             src={card.photo.url}
-            unoptimized
             alt=""
-            fill
             sizes="5rem"
-            className="object-cover"
+            fallback={
+              <span
+                aria-hidden="true"
+                className="flex h-full items-end p-2 font-display text-[1.25rem] leading-none font-bold uppercase"
+              >
+                {card.name.slice(0, 2)}
+              </span>
+            }
           />
         ) : (
           <span

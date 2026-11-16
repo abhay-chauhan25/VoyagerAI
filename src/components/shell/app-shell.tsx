@@ -10,7 +10,7 @@ import { signOut } from "@/lib/auth/actions";
 import { sectionForPath } from "@/lib/boarding/sections";
 import { SECTION_HUE, hueStyle } from "@/lib/hues";
 import { Avatar } from "./avatar";
-import { DnaIcon } from "./icons";
+import { DnaIcon, HuddleIcon } from "./icons";
 import { NAV_ITEMS, isActivePath } from "./nav-items";
 
 type ShellUser = { id: string; displayName: string; email: string };
@@ -25,6 +25,7 @@ export function AppShell({ user, children }: { user: ShellUser; children: React.
   const current = NAV_ITEMS.find((item) => isActivePath(pathname, item.href));
   const onAccount = isActivePath(pathname, "/account");
   const onDna = isActivePath(pathname, "/dna");
+  const onFriends = isActivePath(pathname, "/friends");
   const part = sectionForPath(pathname);
 
   return (
@@ -81,6 +82,19 @@ export function AppShell({ user, children }: { user: ShellUser; children: React.
             >
               <DnaIcon className="hue-text" />
               Travel DNA
+            </Link>
+            <Link
+              href="/friends"
+              aria-current={onFriends ? "page" : undefined}
+              style={hueStyle("sea")}
+              className={`flex min-h-9 items-center gap-2.5 rounded-control px-2.5 text-ui transition-colors duration-150 ${
+                onFriends
+                  ? "bg-active font-semibold text-ink"
+                  : "text-muted hover:bg-raised hover:text-ink"
+              }`}
+            >
+              <HuddleIcon className="hue-text" />
+              Friends
             </Link>
           </nav>
           <div className="mt-auto flex flex-col gap-3">
@@ -141,7 +155,13 @@ export function AppShell({ user, children }: { user: ShellUser; children: React.
           >
             <Mark size={22} />
             <span className="text-body font-semibold">
-              {onAccount ? "Account" : onDna ? "Travel DNA" : (current?.label ?? "Voyager")}
+              {onAccount
+                ? "Account"
+                : onDna
+                  ? "Travel DNA"
+                  : onFriends
+                    ? "Friends"
+                    : (current?.label ?? "Voyager")}
             </span>
           </Link>
           <Link href="/account" aria-label="Account" className="rounded-full">

@@ -8,10 +8,13 @@ export function FollowButton({
   userId,
   name,
   following,
+  followsMe = false,
 }: {
   userId: string;
   name: string;
   following: boolean;
+  /** True when they already follow the traveller: following makes the two friends. */
+  followsMe?: boolean;
 }) {
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
@@ -20,7 +23,9 @@ export function FollowButton({
       <button
         type="button"
         disabled={pending}
-        aria-label={following ? `Unfollow ${name}` : `Follow ${name}`}
+        aria-label={
+          following ? `Unfollow ${name}` : followsMe ? `Follow ${name} back` : `Follow ${name}`
+        }
         onClick={() =>
           start(async () => {
             const result = await setFollow({ userId, follow: !following });
@@ -33,7 +38,7 @@ export function FollowButton({
             : "border-primary bg-primary text-primary-ink hover:bg-primary-hover"
         }`}
       >
-        {following ? "Following" : "Follow"}
+        {following ? (followsMe ? "Friends" : "Following") : followsMe ? "Follow back" : "Follow"}
       </button>
       {error ? (
         <span role="alert" className="text-meta font-semibold text-negative">

@@ -6,6 +6,7 @@ export const ONBOARDING_PATH = "/welcome";
 const PROTECTED_PREFIXES = [
   "/board",
   "/huddle",
+  "/friends",
   "/drift",
   "/trips",
   "/atlas",

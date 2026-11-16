@@ -28,7 +28,8 @@ product blueprint and stage plan, and [`docs/architecture.md`](docs/architecture
   (mouse, touch or keyboard), switch walk/drive, re-order a day, set price levels or exact amounts,
   and watch pace and budget meters. **Ask Compass** to change the trip ("make day 2 slower", "it's
   raining on Thursday") and accept or reject each proposed change; without AI a rule-based parser
-  handles common requests.
+  handles common requests. Asked to add places, Compass can also suggest real places in the city
+  that you haven't saved, including places to eat.
 - **Huddle**: share a trip by invite link (editor or viewer, 7 days, revocable) or by @handle.
   Members see who is here and which day they're on, and every change appears for everyone within a
   second (Supabase Realtime, on a private channel per trip). **Group Drift** deals the same deck to
@@ -47,6 +48,12 @@ product blueprint and stage plan, and [`docs/architecture.md`](docs/architecture
   travellers with public profiles. Publish a trip as a **story** (Compass can draft it for you to
   edit, or a plain template is used), and **fork** any story you can see into a trip of your own.
   A story shares places and days only.
+- **Friends and profiles**: a Friends page shows your friends, following and follower counts, who
+  to follow back, and public travellers you could follow (with search). Two people who follow each
+  other are friends. Profiles can carry a bio, a link, and a contact email and phone number; each
+  contact detail has its own setting (nobody, friends, followers, any signed-in traveller), starts
+  hidden, and is never shown to visitors who aren't signed in. A profile also lists the notes and
+  stories its owner has shared with you. Trip owners can invite a friend with one press.
 - App shell with day/night/auto theme in the "Golden hour livery"
   palette, maps on Mapbox Standard lit for day or night.
 

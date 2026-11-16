@@ -49,6 +49,8 @@ export type StoredProposal = {
   changes: Change[];
   /** Per-member notes (Consensus explains its trade-offs here). */
   details: string[];
+  /** Places this proposal would add that the traveller hasn't saved, as they were suggested. */
+  places: ActivityCard[];
   createdAt: string;
 };
 
@@ -133,7 +135,7 @@ export async function loadTrip(
   const { data, error } = await supabase
     .from("trips")
     .select(
-      "id, title, city_id, start_date, day_count, pace, budget, currency, updated_at, plan_revision, city:cities(name, country_code), days:trip_days(day_index, title, title_source, mode, route), stops:trip_stops(id, day_index, position, source_key, place, dwell_minutes, price_level, cost_amount), proposals(id, request, source, summary, changes, details, status, created_at), me:trip_members!inner(role, user_id)",
+      "id, title, city_id, start_date, day_count, pace, budget, currency, updated_at, plan_revision, city:cities(name, country_code), days:trip_days(day_index, title, title_source, mode, route), stops:trip_stops(id, day_index, position, source_key, place, dwell_minutes, price_level, cost_amount), proposals(id, request, source, summary, changes, details, places, status, created_at), me:trip_members!inner(role, user_id)",
     )
     .eq("id", tripId)
     .eq("me.user_id", userId)
@@ -194,6 +196,12 @@ export async function loadTrip(
           changes: changes.data,
           details: Array.isArray(p.details)
             ? p.details.filter((d): d is string => typeof d === "string").slice(0, 12)
+            : [],
+          places: Array.isArray(p.places)
+            ? p.places.flatMap((place) => {
+                const card = stopPlaceSchema.safeParse(place);
+                return card.success ? [card.data] : [];
+              })
             : [],
           createdAt: p.created_at,
         },

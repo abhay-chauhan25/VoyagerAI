@@ -1,15 +1,22 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Screen, ScreenHeader } from "@/components/app/screen";
+import { AboutForm } from "@/components/account/about-form";
 import { ProfileForm } from "@/components/account/profile-form";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { signOut } from "@/lib/auth/actions";
+import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/user/current-user";
 
 export const metadata: Metadata = { title: "Account" };
 
 export default async function AccountPage() {
   const user = await requireUser("/account");
+  const supabase = await createClient();
+  const [{ data: about }, { data: contact }] = await Promise.all([
+    supabase.from("profiles").select("bio, website").eq("id", user.id).single(),
+    supabase.from("profile_contacts").select("*").eq("user_id", user.id).maybeSingle(),
+  ]);
 
   return (
     <Screen>
@@ -51,6 +58,33 @@ export default async function AccountPage() {
               </Link>
             </p>
           ) : null}
+        </div>
+      </section>
+
+      <section
+        aria-labelledby="about-heading"
+        className="grid gap-6 border-b border-rule pb-8 md:grid-cols-[18rem_minmax(0,32rem)]"
+      >
+        <div className="flex flex-col gap-1">
+          <h2 id="about-heading" className="text-body font-semibold">
+            About and contact
+          </h2>
+          <p className="text-ui text-muted">
+            A few words about you, and ways to reach you if you choose to share them.{" "}
+            <Link href="/friends" className="font-semibold underline underline-offset-4">
+              Your friends
+            </Link>
+          </p>
+        </div>
+        <div className="rounded-card bg-panel p-5">
+          <AboutForm
+            bio={about?.bio ?? null}
+            website={about?.website ?? null}
+            contactEmail={contact?.contact_email ?? null}
+            phone={contact?.phone ?? null}
+            emailAudience={contact?.email_audience ?? "hidden"}
+            phoneAudience={contact?.phone_audience ?? "hidden"}
+          />
         </div>
       </section>
 

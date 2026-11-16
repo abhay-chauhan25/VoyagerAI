@@ -174,6 +174,7 @@ export async function setFollow(input: unknown): Promise<NotesResult> {
       : FAILED;
   }
   revalidatePath("/notes");
+  revalidatePath("/friends");
   revalidatePath("/u/[handle]", "page");
   return { ok: true };
 }

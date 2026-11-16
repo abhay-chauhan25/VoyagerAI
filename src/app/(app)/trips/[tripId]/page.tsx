@@ -13,6 +13,7 @@ import {
   loadPool,
   loadVotes,
 } from "@/lib/huddle/queries";
+import { loadCircle } from "@/lib/friends/queries";
 import { createClient } from "@/lib/supabase/server";
 import { loadTrip } from "@/lib/trips/queries";
 import { buildTripView } from "@/lib/trips/view";
@@ -29,12 +30,13 @@ export default async function TripPage({ params }: { params: Promise<{ tripId: s
   const trip = await loadTrip(supabase, user.id, id.data);
   if (!trip) notFound();
   const owner = trip.role === "owner";
-  const [pool, callsLeft, members, links, personInvites] = await Promise.all([
+  const [pool, callsLeft, members, links, personInvites, circle] = await Promise.all([
     loadPool(supabase, user.id, trip),
     aiCallsLeft(supabase, user.id),
     loadMembers(supabase, trip.id),
     owner ? loadInviteLinks(supabase, trip.id) : Promise.resolve([]),
     owner ? loadPersonInvites(supabase, trip.id) : Promise.resolve([]),
+    owner ? loadCircle(supabase) : Promise.resolve(null),
   ]);
   const votes = await loadVotes(supabase, trip.id, user.id, members);
 
@@ -57,6 +59,7 @@ export default async function TripPage({ params }: { params: Promise<{ tripId: s
               members={members}
               links={links}
               personInvites={personInvites}
+              friends={circle?.friends.map(({ id, name }) => ({ id, name })) ?? []}
             />
           }
         />

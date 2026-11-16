@@ -5,6 +5,7 @@ import { Wordmark } from "@/components/brand/mark";
 import { AtlasMap } from "@/components/atlas/atlas-map";
 import { StatsStrip } from "@/components/atlas/stats-strip";
 import { VisitList } from "@/components/atlas/visit-list";
+import { Feed } from "@/components/notes/feed";
 import { FollowButton } from "@/components/notes/note-controls";
 import { Avatar } from "@/components/shell/avatar";
 import { loadVisits } from "@/lib/atlas/queries";
@@ -13,6 +14,7 @@ import { loadTravelDna } from "@/lib/dna/queries";
 import { describeWeight, rankTraits } from "@/lib/dna/score";
 import { PACE_LABELS } from "@/lib/dna/schemas";
 import { publicEnv } from "@/lib/env";
+import { loadFeed } from "@/lib/notes/queries";
 import { createClient } from "@/lib/supabase/server";
 import { findProfileByHandle } from "@/lib/user/public-profile";
 
@@ -38,8 +40,24 @@ export default async function PublicProfilePage({ params }: Params) {
   const { data: session } = await supabase.auth.getClaims();
   const viewerId = session?.claims?.sub ?? null;
   const canFollow = Boolean(viewerId) && viewerId !== profile.id && profile.isPublic;
+  // Notes and contact details are for signed-in travellers; each is filtered by its owner's choices.
+  const [notes, contactRows] = viewerId
+    ? await Promise.all([
+        loadFeed(supabase, profile.id, "mine"),
+        supabase.rpc("profile_contact", { p_user: profile.id }),
+      ])
+    : [[], null];
+  const contact = contactRows?.data?.[0] ?? null;
+  let followsMe = false;
   let following = false;
   if (canFollow && viewerId) {
+    const { data: back } = await supabase
+      .from("follows")
+      .select("follower_id")
+      .eq("follower_id", profile.id)
+      .eq("followee_id", viewerId)
+      .maybeSingle();
+    followsMe = Boolean(back);
     const { data: follow } = await supabase
       .from("follows")
       .select("followee_id")
@@ -85,10 +103,55 @@ export default async function PublicProfilePage({ params }: Params) {
           </div>
           {canFollow ? (
             <div className="ml-auto">
-              <FollowButton userId={profile.id} name={profile.displayName} following={following} />
+              <FollowButton
+                userId={profile.id}
+                name={profile.displayName}
+                following={following}
+                followsMe={followsMe}
+              />
             </div>
           ) : null}
         </div>
+
+        {profile.bio || profile.website || contact?.contact_email || contact?.phone ? (
+          <section aria-label="About" className="flex max-w-[60ch] flex-col gap-3">
+            {profile.bio ? <p className="text-body whitespace-pre-line">{profile.bio}</p> : null}
+            <ul className="flex flex-wrap gap-x-6 gap-y-1 text-ui">
+              {profile.website ? (
+                <li>
+                  <a
+                    href={profile.website}
+                    rel="noopener noreferrer nofollow"
+                    target="_blank"
+                    className="font-semibold underline underline-offset-4"
+                  >
+                    {profile.website.replace(/^https:\/\//, "").replace(/\/$/, "")}
+                  </a>
+                </li>
+              ) : null}
+              {contact?.contact_email ? (
+                <li>
+                  <a
+                    href={`mailto:${contact.contact_email}`}
+                    className="font-semibold underline underline-offset-4"
+                  >
+                    {contact.contact_email}
+                  </a>
+                </li>
+              ) : null}
+              {contact?.phone ? (
+                <li>
+                  <a
+                    href={`tel:${contact.phone.replace(/[^+0-9]/g, "")}`}
+                    className="font-semibold underline underline-offset-4"
+                  >
+                    {contact.phone}
+                  </a>
+                </li>
+              ) : null}
+            </ul>
+          </section>
+        ) : null}
 
         <StatsStrip stats={stats} />
 
@@ -143,6 +206,30 @@ export default async function PublicProfilePage({ params }: Params) {
             <div className="rounded-card border border-border bg-panel px-5 py-2">
               <VisitList visits={visits} editable={false} />
             </div>
+          )}
+        </section>
+        <section aria-labelledby="notes-heading" className="flex flex-col gap-3">
+          <h2 id="notes-heading" className="text-body font-semibold">
+            Notes and stories
+          </h2>
+          {!viewerId ? (
+            <p className="rounded-card border border-dashed border-control px-5 py-6 text-ui text-muted">
+              Sign in to read what {profile.displayName} has shared.
+            </p>
+          ) : notes.length === 0 ? (
+            <p className="rounded-card border border-dashed border-control px-5 py-6 text-ui text-muted">
+              Nothing shared with you yet.
+            </p>
+          ) : (
+            <Feed
+              items={notes}
+              context={{
+                me: viewerId,
+                following: new Set(following ? [profile.id] : []),
+                // The byline is already this page's subject: no second link or follow button.
+                handles: new Map(),
+              }}
+            />
           )}
         </section>
       </main>

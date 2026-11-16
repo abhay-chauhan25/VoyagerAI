@@ -11,6 +11,7 @@ const APP_PAGES = [
   "/trips",
   "/trips/new",
   "/huddle",
+  "/friends",
   "/drift",
   "/dna",
   "/atlas",

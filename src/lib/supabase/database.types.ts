@@ -221,30 +221,50 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
-                },"profiles": {
+                },"profile_contacts": {
                   Row: {
-                    "created_at": string,"display_name": string,"handle": string | null,"home_city": string | null,"id": string,"is_public": boolean,"updated_at": string
+                    "contact_email": string | null,"email_audience": Database["public"]['Enums']["contact_audience"],"phone": string | null,"phone_audience": Database["public"]['Enums']["contact_audience"],"updated_at": string,"user_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "created_at"?: string,"display_name": string,"handle"?: string | null,"home_city"?: string | null,"id": string,"is_public"?: boolean,"updated_at"?: string
+                    "contact_email"?: string | null,"email_audience"?: Database["public"]['Enums']["contact_audience"],"phone"?: string | null,"phone_audience"?: Database["public"]['Enums']["contact_audience"],"updated_at"?: string,"user_id"?: string
                   }
                   Update: {
-                    "created_at"?: string,"display_name"?: string,"handle"?: string | null,"home_city"?: string | null,"id"?: string,"is_public"?: boolean,"updated_at"?: string
+                    "contact_email"?: string | null,"email_audience"?: Database["public"]['Enums']["contact_audience"],"phone"?: string | null,"phone_audience"?: Database["public"]['Enums']["contact_audience"],"updated_at"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "profile_contacts_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: true
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"profiles": {
+                  Row: {
+                    "bio": string | null,"created_at": string,"display_name": string,"handle": string | null,"home_city": string | null,"id": string,"is_public": boolean,"updated_at": string,"website": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "bio"?: string | null,"created_at"?: string,"display_name": string,"handle"?: string | null,"home_city"?: string | null,"id": string,"is_public"?: boolean,"updated_at"?: string,"website"?: string | null
+                  }
+                  Update: {
+                    "bio"?: string | null,"created_at"?: string,"display_name"?: string,"handle"?: string | null,"home_city"?: string | null,"id"?: string,"is_public"?: boolean,"updated_at"?: string,"website"?: string | null
                   }
                   Relationships: [
                     
                   ]
                 },"proposals": {
                   Row: {
-                    "changes": NonNullable<Json>,"created_at": string,"decided_at": string | null,"details": NonNullable<Json>,"id": string,"request": string,"source": string,"status": Database["public"]['Enums']["proposal_status"],"summary": string,"trip_id": string,"user_id": string
+                    "changes": NonNullable<Json>,"created_at": string,"decided_at": string | null,"details": NonNullable<Json>,"id": string,"places": NonNullable<Json>,"request": string,"source": string,"status": Database["public"]['Enums']["proposal_status"],"summary": string,"trip_id": string,"user_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "changes": NonNullable<Json>,"created_at"?: string,"decided_at"?: string | null,"details"?: NonNullable<Json>,"id"?: string,"request": string,"source": string,"status"?: Database["public"]['Enums']["proposal_status"],"summary": string,"trip_id": string,"user_id"?: string
+                    "changes": NonNullable<Json>,"created_at"?: string,"decided_at"?: string | null,"details"?: NonNullable<Json>,"id"?: string,"places"?: NonNullable<Json>,"request": string,"source": string,"status"?: Database["public"]['Enums']["proposal_status"],"summary": string,"trip_id": string,"user_id"?: string
                   }
                   Update: {
-                    "changes"?: NonNullable<Json>,"created_at"?: string,"decided_at"?: string | null,"details"?: NonNullable<Json>,"id"?: string,"request"?: string,"source"?: string,"status"?: Database["public"]['Enums']["proposal_status"],"summary"?: string,"trip_id"?: string,"user_id"?: string
+                    "changes"?: NonNullable<Json>,"created_at"?: string,"decided_at"?: string | null,"details"?: NonNullable<Json>,"id"?: string,"places"?: NonNullable<Json>,"request"?: string,"source"?: string,"status"?: Database["public"]['Enums']["proposal_status"],"summary"?: string,"trip_id"?: string,"user_id"?: string
                   }
                   Relationships: [
                     {
@@ -594,6 +614,9 @@ isOneToOne: false
             "accept_trip_invite":
 { Args: { "p_token": string }; Returns: string
                            },
+"are_friends":
+{ Args: { "p_other": string }; Returns: boolean
+                           },
 "arrange_trip":
 { Args: { "p_add"?: Json,"p_layout": Json,"p_remove"?: (string)[],"p_revision": number,"p_trip": string }; Returns: number
                            },
@@ -618,6 +641,9 @@ isOneToOne: false
 "invite_by_handle":
 { Args: { "p_handle": string,"p_role": Database["public"]['Enums']["trip_role"],"p_trip": string }; Returns: undefined
                            },
+"invite_friend":
+{ Args: { "p_friend": string,"p_role": Database["public"]['Enums']["trip_role"],"p_trip": string }; Returns: undefined
+                           },
 "invite_hash":
 { Args: { "p_token": string }; Returns: string
                            },
@@ -632,9 +658,19 @@ isOneToOne: false
 "is_trip_owner":
 { Args: { "p_trip": string }; Returns: boolean
                            },
+"my_connections":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "display_name": string,"follows_me": boolean,"handle": string,"i_follow": boolean,"is_public": boolean,"user_id": string
+            }[]
+                           },
 "my_trip_invitations":
 { Args: Record<PropertyKey, never>; Returns: {
               "city_name": string,"day_count": number,"id": string,"inviter": string,"role": Database["public"]['Enums']["trip_role"],"start_date": string,"title": string,"trip_id": string
+            }[]
+                           },
+"profile_contact":
+{ Args: { "p_user": string }; Returns: {
+              "contact_email": string,"phone": string
             }[]
                            },
 "profile_is_public":
@@ -680,7 +716,7 @@ isOneToOne: false
                            }
           }
           Enums: {
-            "budget_band": "shoestring"|"comfortable"|"splurge","dna_reaction": "pass"|"love"|"more","note_visibility": "private"|"followers"|"public","proposal_status": "pending"|"applied"|"dismissed","save_kind": "destination"|"activity","travel_mode": "walking"|"driving","travel_pace": "slow"|"balanced"|"full","trip_role": "owner"|"editor"|"viewer"
+            "budget_band": "shoestring"|"comfortable"|"splurge","contact_audience": "hidden"|"friends"|"followers"|"travellers","dna_reaction": "pass"|"love"|"more","note_visibility": "private"|"followers"|"public","proposal_status": "pending"|"applied"|"dismissed","save_kind": "destination"|"activity","travel_mode": "walking"|"driving","travel_pace": "slow"|"balanced"|"full","trip_role": "owner"|"editor"|"viewer"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -800,7 +836,7 @@ export const Constants = {
           }
         },"public": {
           Enums: {
-            "budget_band": ["shoestring", "comfortable", "splurge"],"dna_reaction": ["pass", "love", "more"],"note_visibility": ["private", "followers", "public"],"proposal_status": ["pending", "applied", "dismissed"],"save_kind": ["destination", "activity"],"travel_mode": ["walking", "driving"],"travel_pace": ["slow", "balanced", "full"],"trip_role": ["owner", "editor", "viewer"]
+            "budget_band": ["shoestring", "comfortable", "splurge"],"contact_audience": ["hidden", "friends", "followers", "travellers"],"dna_reaction": ["pass", "love", "more"],"note_visibility": ["private", "followers", "public"],"proposal_status": ["pending", "applied", "dismissed"],"save_kind": ["destination", "activity"],"travel_mode": ["walking", "driving"],"travel_pace": ["slow", "balanced", "full"],"trip_role": ["owner", "editor", "viewer"]
           }
         }
 } as const

@@ -7,6 +7,7 @@ import { z } from "zod";
 import { consumeAiQuota } from "@/lib/ai/quota";
 import type { FormState } from "@/lib/auth/form-state";
 import { readFields, toFieldErrors } from "@/lib/auth/schemas";
+import type { ActivityCard } from "@/lib/drift/cards";
 import { describeProfile } from "@/lib/drift/prompts";
 import { loadTravelDna, type TravelDna } from "@/lib/dna/queries";
 import { createClient } from "@/lib/supabase/server";
@@ -27,6 +28,7 @@ import {
 } from "./schemas";
 import { arrangeStops, composeTrip, syncRoutes, type Placed } from "./service";
 import { PRICE_LEVELS, stopProfile } from "./stops";
+import { WANTS_MORE, citySuggestions } from "./suggestions";
 
 export type TripActionResult = { ok: true; message?: string } | { ok: false; message: string };
 
@@ -376,10 +378,26 @@ export async function askForChanges(input: unknown): Promise<TripActionResult> {
   if ("error" in found) return found.error;
   const { ctx } = found;
   const { supabase, userId, trip } = ctx;
-  const [dna, saves] = await Promise.all([
+  const [dna, saved] = await Promise.all([
     loadTravelDna(supabase, userId),
     loadPool(supabase, userId, trip),
   ]);
+  // Asked to add to the trip: Compass may also choose from real places in the city that the
+  // traveller hasn't saved. A failed lookup only means it works from their saves alone.
+  let suggested: ActivityCard[] = [];
+  if (WANTS_MORE.test(parsed.data.request)) {
+    const known = new Set([
+      ...trip.stops.map((stop) => stop.sourceKey),
+      ...saved.map((card) => card.sourceKey),
+    ]);
+    suggested = await citySuggestions(supabase, trip.cityId, weightsOf(dna), known).catch(
+      (cause: unknown) => {
+        console.error("Looking up places to suggest failed", { cause: String(cause) });
+        return [];
+      },
+    );
+  }
+  const saves = [...saved, ...suggested];
   const plan = toPlan(trip, saves, weightsOf(dna));
 
   let answer: { summary: string; changes: ReturnType<typeof resolveProposal> } | null = null;
@@ -404,6 +422,10 @@ export async function askForChanges(input: unknown): Promise<TripActionResult> {
     source,
     summary: answer.summary.slice(0, 300),
     changes: answer.changes,
+    // Keep the details of any suggested place the answer uses, so accepting it adds that place.
+    places: suggested.filter((card) =>
+      answer.changes.some((change) => change.type === "add" && change.sourceKey === card.sourceKey),
+    ),
   });
   if (error) {
     console.error("Storing a proposal failed", { code: error.code });

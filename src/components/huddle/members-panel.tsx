@@ -6,6 +6,7 @@ import { INTEREST_HUE, hueStyle } from "@/lib/hues";
 import {
   createInviteLink,
   inviteByHandle,
+  inviteFriend,
   removeMember,
   revokeInviteLink,
   setMemberRole,
@@ -24,6 +25,8 @@ const ROLE_LABELS: Record<TripRole, string> = {
 const expiryFormat = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short" });
 
 type Props = {
+  /** The owner's friends, for one-press invites. */
+  friends?: readonly { id: string; name: string }[];
   tripId: string;
   meId: string;
   myRole: TripRole;
@@ -33,7 +36,17 @@ type Props = {
 };
 
 /** Who is on the trip, who is here right now, and (for the owner) roles and invites. */
-export function MembersPanel({ tripId, meId, myRole, members, links, personInvites }: Props) {
+export function MembersPanel({
+  tripId,
+  meId,
+  myRole,
+  members,
+  links,
+  personInvites,
+  friends = [],
+}: Props) {
+  const onTrip = new Set(members.map((member) => member.id));
+  const invitable = friends.filter((friend) => !onTrip.has(friend.id));
   const { here, connected } = useLive();
   const [message, setMessage] = useState<{ text: string; tone: "ok" | "error" } | null>(null);
   const [pending, start] = useTransition();
@@ -170,6 +183,7 @@ export function MembersPanel({ tripId, meId, myRole, members, links, personInvit
           tripId={tripId}
           links={links}
           personInvites={personInvites}
+          invitable={invitable}
           pending={pending}
           run={run}
         />
@@ -182,9 +196,12 @@ function Invites({
   tripId,
   links,
   personInvites,
+  invitable,
   pending,
   run,
 }: {
+  /** Friends of the owner who aren't on the trip yet. */
+  invitable: readonly { id: string; name: string }[];
   tripId: string;
   links: InviteLink[];
   personInvites: PendingPersonInvite[];
@@ -292,6 +309,33 @@ function Invites({
             </ul>
           ) : null}
         </div>
+
+        {invitable.length > 0 ? (
+          <div className="flex flex-col gap-2">
+            <h4 className="text-meta font-semibold">Invite a friend</h4>
+            <ul className="flex flex-wrap gap-2" aria-label="Friends you can invite">
+              {invitable.map((friend) => (
+                <li key={friend.id}>
+                  <button
+                    type="button"
+                    disabled={pending}
+                    aria-label={`Invite ${friend.name} as ${handleRole === "editor" ? "an editor" : "a viewer"}`}
+                    onClick={() =>
+                      run(() => inviteFriend({ tripId, friendId: friend.id, role: handleRole }))
+                    }
+                    className="pressable flex min-h-9 items-center gap-1.5 rounded-control border border-control px-3 text-meta font-semibold hover:bg-raised disabled:opacity-60"
+                  >
+                    <span aria-hidden="true">+</span>
+                    {friend.name}
+                  </button>
+                </li>
+              ))}
+            </ul>
+            <p className="text-meta text-muted">
+              Joins as {handleRole === "editor" ? "an editor" : "a viewer"}; change the role below.
+            </p>
+          </div>
+        ) : null}
 
         <form
           onSubmit={(e) => {

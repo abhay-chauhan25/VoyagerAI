@@ -133,10 +133,3 @@ local Postgres. End-to-end tests run locally.
 - Opening hours: OpenStreetMap, evaluated with the `opening_hours` library.
 - Drift places: © OpenStreetMap contributors (ODbL) and Wikipedia (CC BY-SA); descriptions from
   Wikivoyage/Wikipedia (CC BY-SA); photos from Wikimedia Commons, credited on each card.
-
-### Pictures
-
-The landing and sign-in pages use openly licensed photographs and public-domain maps of Lisbon from
-Wikimedia Commons. Every credit is listed on the landing page footer and in
-`public/images/landing/credits.json`; Travel DNA scene photos are credited in
-`public/images/scenes/credits.json`.
